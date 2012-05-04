@@ -16,8 +16,13 @@ package graph
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import (
+	"fmt"
 	"math/rand"
 )
+
+// SelectorEmpty is returned when an attempt is made to select an item from a Selector with
+// no remaining slectable items.
+var SelectorEmpty = fmt.Errorf("graph: selector empty")
 
 // A WeightedItem is a type that can be be selected from a population with a defined probability
 // specified by the field Weight. Index is used as an index to the actual item in another slice.
@@ -43,7 +48,10 @@ func (self Selector) Init() {
 
 // Select returns the value of the Index field of the chosen WeightedItem and the item is weighted 
 // zero to prevent further selection.
-func (self Selector) Select() (index int) {
+func (self Selector) Select() (index int, err error) {
+	if self[0].total == 0 {
+		return -1, SelectorEmpty
+	}
 	s, i := self[0].total*rand.Float64(), 1
 
 	for {

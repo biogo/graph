@@ -90,7 +90,11 @@ func (s *S) TestWeightedUnseeded(c *check.C) {
 	for i := 0; i < 1e6; i++ {
 		copy(ts, sel)
 		ts.Init()
-		f[ts.Select()-1]++
+		item, err := ts.Select()
+		if err != nil {
+			c.Fatal(err)
+		}
+		f[item-1]++
 	}
 
 	fsum, exsum := 0., 0.
@@ -121,7 +125,11 @@ func (s *S) TestWeightedTimeSeeded(c *check.C) {
 	for i := 0; i < 1e6; i++ {
 		copy(ts, sel)
 		ts.Init()
-		f[ts.Select()-1]++
+		item, err := ts.Select()
+		if err != nil {
+			c.Fatal(err)
+		}
+		f[item-1]++
 	}
 
 	fsum, exsum := 0., 0.
@@ -155,7 +163,11 @@ func (s *S) TestWeightZero(c *check.C) {
 		copy(ts, sel)
 		ts.Init()
 		ts.Weight(6, 0)
-		f[ts.Select()-1]++
+		item, err := ts.Select()
+		if err != nil {
+			c.Fatal(err)
+		}
+		f[item-1]++
 	}
 
 	fsum, exsum := 0., 0.
@@ -188,7 +200,11 @@ func (s *S) TestWeightIncrease(c *check.C) {
 		copy(ts, sel)
 		ts.Init()
 		ts.Weight(6, sel[len(sel)-1].Weight*2)
-		f[ts.Select()-1]++
+		item, err := ts.Select()
+		if err != nil {
+			c.Fatal(err)
+		}
+		f[item-1]++
 	}
 
 	fsum, exsum := 0., 0.
