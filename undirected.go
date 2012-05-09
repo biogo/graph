@@ -51,6 +51,8 @@ func BuildUndirected(ns []*Node, compact bool) (g *Undirected, err error) {
 	seen := make(map[*Edge]struct{})
 	g = NewUndirected()
 	for _, n := range ns {
+		g.Add(n.ID())
+		g.nodes[n.ID()].name = n.name
 		for _, e := range n.Edges() {
 			if _, ok := seen[e]; ok {
 				continue
@@ -62,15 +64,20 @@ func BuildUndirected(ns []*Node, compact bool) (g *Undirected, err error) {
 				return nil, NodeIDOutOfRange
 			}
 			g.Add(uid)
+			g.nodes[uid].name = u.name
 			g.Add(vid)
+			g.nodes[vid].name = v.name
 			var ne *Edge
 			if compact {
 				ne = g.newEdge(g.nodes[uid], g.nodes[vid], e.Weight(), e.Flags())
 			} else {
 				ne = g.newEdgeKeepID(e.ID(), g.nodes[uid], g.nodes[vid], e.Weight(), e.Flags())
 			}
+			ne.name = e.name
 			g.nodes[uid].add(ne)
-			g.nodes[vid].add(ne)
+			if vid != uid {
+				g.nodes[vid].add(ne)
+			}
 		}
 	}
 
@@ -85,7 +92,7 @@ func (self *Undirected) NextNodeID() int {
 
 // NextEdgeID returns the next unused available edge ID.
 func (self *Undirected) NextEdgeID() int {
-	return len(self.nodes)
+	return len(self.edges)
 }
 
 // Order returns the number of nodes in the graph.
@@ -297,7 +304,9 @@ func (self *Undirected) Connect(u, v *Node, w float64, f EdgeFlags) (id int, err
 
 	e := self.newEdge(u, v, w, f)
 	u.add(e)
-	v.add(e)
+	if v != u {
+		v.add(e)
+	}
 	id = e.ID()
 
 	return
@@ -319,7 +328,9 @@ func (self *Undirected) ConnectByID(uid, vid int, w float64, f EdgeFlags) (id in
 
 	e := self.newEdge(self.nodes[uid], self.nodes[vid], w, f)
 	self.nodes[uid].add(e)
-	self.nodes[vid].add(e)
+	if vid != uid {
+		self.nodes[vid].add(e)
+	}
 	id = e.ID()
 
 	return

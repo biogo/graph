@@ -24,6 +24,7 @@ type NodeFilter func(*Node) bool
 
 // A Node is a node in a graph.
 type Node struct {
+	name  string
 	id    int
 	index int
 	edges Edges
@@ -41,6 +42,16 @@ func newNode(id int) *Node {
 type Hop struct {
 	Edge *Edge
 	Node *Node
+}
+
+// Name returns the name of a node.
+func (self *Node) Name() string {
+	return self.name
+}
+
+// SetName sets the name of a node to n.
+func (self *Node) SetName(n string) {
+	self.name = n
 }
 
 // ID returns the id of a node.

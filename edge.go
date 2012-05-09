@@ -34,6 +34,7 @@ const (
 
 // An Edge is an edge in a graph.
 type Edge struct {
+	name   string
 	id     int
 	i      int
 	u, v   *Node
@@ -45,6 +46,16 @@ type Edge struct {
 // graph, so this is private.
 func newEdge(id, i int, u, v *Node, w float64, f EdgeFlags) *Edge {
 	return &Edge{id: id, i: i, u: u, v: v, weight: w, flags: f}
+}
+
+// Name returns the name of a node.
+func (self *Edge) Name() string {
+	return self.name
+}
+
+// SetName sets the name of a node to n.
+func (self *Edge) SetName(n string) {
+	self.name = n
 }
 
 // ID returns the id of the edge.
