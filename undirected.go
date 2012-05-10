@@ -289,25 +289,24 @@ func (self *Undirected) newEdgeKeepID(id int, u, v *Node, w float64, f EdgeFlags
 }
 
 // Connect creats a new edge joining nodes u and v with weight w, and specifying edge flags f.
-// The id of the new edge is returned on success. An error is returned if either of the nodes does not
+// The new edge is returned on success. An error is returned if either of the nodes does not
 // exist.
-func (self *Undirected) Connect(u, v *Node, w float64, f EdgeFlags) (id int, err error) {
+func (self *Undirected) Connect(u, v *Node, w float64, f EdgeFlags) (e *Edge, err error) {
 	var ok bool
 	ok, err = self.Has(u)
 	if !ok {
-		return -1, err
+		return
 	}
 	ok, err = self.Has(v)
 	if !ok {
-		return -1, err
+		return
 	}
 
-	e := self.newEdge(u, v, w, f)
+	e = self.newEdge(u, v, w, f)
 	u.add(e)
 	if v != u {
 		v.add(e)
 	}
-	id = e.ID()
 
 	return
 }
@@ -417,7 +416,7 @@ func (self *Undirected) DeleteEdge(e *Edge) (err error) {
 	e.disconnect(e.Tail())
 	self.compEdges = self.compEdges.delFromGraph(i)
 	self.edges[e.ID()] = nil
-	(*e) = Edge{}
+	*e = Edge{}
 
 	return
 }
