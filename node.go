@@ -109,6 +109,9 @@ func (self *Node) Hops(ef EdgeFilter) (h []*Hop) {
 func (self *Node) add(e *Edge) { self.edges = append(self.edges, e) }
 
 func (self *Node) dropAll() {
+	for i := range self.edges {
+		self.edges[i] = nil
+	}
 	self.edges = self.edges[:0]
 }
 
@@ -116,6 +119,7 @@ func (self *Node) drop(e *Edge) {
 	for i := 0; i < len(self.edges); {
 		if self.edges[i] == e {
 			self.edges = self.edges.delFromNode(i)
+			return // assumes e has not been added more than once - this should not happen, but we don't check for it
 		} else {
 			i++
 		}
