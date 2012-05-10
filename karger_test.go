@@ -19,6 +19,7 @@ import (
 	check "launchpad.net/gocheck"
 	"math"
 	"math/rand"
+	"runtime"
 	"testing"
 )
 
@@ -136,7 +137,16 @@ func (s *S) TestKargerFastMinCut(c *check.C) {
 	for j, g := range testG {
 		G := createGraph(g)
 		lo := int(math.Log(float64(G.Order())))
-		_, mc := FastRandMinCut(G, lo*lo, -1)
+		_, mc := FastRandMinCut(G, lo*lo)
+		c.Check(mc, check.Equals, cutExpects[j])
+	}
+}
+func (s *S) TestKargerFastMinCutPar(c *check.C) {
+	rand.Seed(0)
+	for j, g := range testG {
+		G := createGraph(g)
+		lo := int(math.Log(float64(G.Order())))
+		_, mc := FastRandMinCutPar(G, lo*lo, runtime.GOMAXPROCS(0))
 		c.Check(mc, check.Equals, cutExpects[j])
 	}
 }
@@ -152,6 +162,15 @@ func (s *S) TestKargerLL(c *check.C) {
 				mc = w
 			}
 		}
+		c.Check(mc, check.Equals, cutExpects[j])
+	}
+}
+func (s *S) TestKargerParFastMinCut(c *check.C) {
+	rand.Seed(0)
+	for j, g := range testG {
+		G := createGraph(g)
+		lo := int(math.Log(float64(G.Order())))
+		_, mc := ParFastRandMinCut(G, lo*lo, runtime.GOMAXPROCS(0))
 		c.Check(mc, check.Equals, cutExpects[j])
 	}
 }
@@ -196,6 +215,20 @@ func BenchmarkFastKarger(b *testing.B) {
 	G := createGraph(testG[0])
 	lo := int(math.Log(float64(G.Order())))
 	for j := 0; j < b.N; j++ {
-		FastRandMinCut(G, lo*lo, -1)
+		FastRandMinCut(G, lo*lo)
+	}
+}
+func BenchmarkFastKargerPar(b *testing.B) {
+	G := createGraph(testG[0])
+	lo := int(math.Log(float64(G.Order())))
+	for j := 0; j < b.N; j++ {
+		FastRandMinCutPar(G, lo*lo, runtime.GOMAXPROCS(0))
+	}
+}
+func BenchmarkParFastKarger(b *testing.B) {
+	G := createGraph(testG[0])
+	lo := int(math.Log(float64(G.Order())))
+	for j := 0; j < b.N; j++ {
+		ParFastRandMinCut(G, lo*lo, runtime.GOMAXPROCS(0))
 	}
 }
