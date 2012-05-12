@@ -154,10 +154,9 @@ func (self *kargerR) fastRandMinCut() {
 
 	t := int(math.Ceil(float64(self.order)/sqrt2 + 1))
 
-	sub := make([]*kargerR, 2)
+	sub := []*kargerR{self, newKargerR(self.g)}
+	sub[1].copy(self)
 	for i := range sub {
-		sub[i] = newKargerR(self.g)
-		sub[i].copy(self)
 		sub[i].randContract(t)
 		sub[i].fastRandMinCut()
 	}
@@ -346,20 +345,17 @@ func (self *kargerRP) fastRandMinCut() {
 		wg = &sync.WaitGroup{}
 	}
 
-	sub := make([]*kargerRP, 2)
+	sub := []*kargerRP{self, newKargerRP(self.g)}
+	sub[1].copy(self)
 	for i := range sub {
 		if wg != nil {
 			wg.Add(1)
 			go func(i int) {
 				defer wg.Done()
-				sub[i] = newKargerRP(self.g)
-				sub[i].copy(self)
 				sub[i].randContract(t)
 				sub[i].fastRandMinCut()
 			}(i)
 		} else {
-			sub[i] = newKargerRP(self.g)
-			sub[i].copy(self)
 			sub[i].randContract(t)
 			sub[i].fastRandMinCut()
 		}
