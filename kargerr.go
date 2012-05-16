@@ -133,17 +133,25 @@ func (self *kargerR) init() {
 	self.sel.Init()
 }
 
-func (self *kargerR) copy(t *kargerR) {
-	self.order = t.order
-	copy(self.sel, t.sel)
-	for i, n := range t.ind {
-		s := &self.ind[i]
+func (self *kargerR) clone() (c *kargerR) {
+	c = &kargerR{
+		g:     self.g,
+		ind:   make([]super, self.g.NextNodeID()),
+		sel:   make(Selector, self.g.Size()),
+		order: self.order,
+	}
+
+	copy(c.sel, self.sel)
+	for i, n := range self.ind {
+		s := &c.ind[i]
 		s.label = n.label
 		if n.nodes != nil {
 			s.nodes = make([]int, len(n.nodes))
 			copy(s.nodes, n.nodes)
 		}
 	}
+
+	return
 }
 
 func (self *kargerR) fastRandMinCut() {
@@ -154,8 +162,7 @@ func (self *kargerR) fastRandMinCut() {
 
 	t := int(math.Ceil(float64(self.order)/sqrt2 + 1))
 
-	sub := []*kargerR{self, newKargerR(self.g)}
-	sub[1].copy(self)
+	sub := []*kargerR{self, self.clone()}
 	for i := range sub {
 		sub[i].randContract(t)
 		sub[i].fastRandMinCut()
@@ -257,7 +264,7 @@ func (self *kargerR) loop(e *Edge) bool {
 
 func ParFastRandMinCut(g *Undirected, iter, threads int) (c []*Edge, w float64) {
 	k := newKargerRP(g)
-	k.split = bits(threads)
+	k.split = threads
 	if k.split == 0 {
 		k.split = -1
 	}
@@ -281,15 +288,8 @@ type kargerRP struct {
 	sel   Selector
 	c     []*Edge
 	w     float64
-	depth int
+	count int
 	split int
-}
-
-func bits(i int) (b int) {
-	for ; i > 1; i >>= 1 {
-		b++
-	}
-	return
 }
 
 func newKargerRP(g *Undirected) *kargerRP {
@@ -316,23 +316,29 @@ func (self *kargerRP) init() {
 	self.sel.Init()
 }
 
-func (self *kargerRP) copy(t *kargerRP) {
-	self.order = t.order
-	self.depth = t.depth
-	self.split = t.split
-	copy(self.sel, t.sel)
-	for i, n := range t.ind {
-		s := &self.ind[i]
+func (self *kargerRP) clone() (c *kargerRP) {
+	c = &kargerRP{
+		g:     self.g,
+		ind:   make([]super, self.g.NextNodeID()),
+		sel:   make(Selector, self.g.Size()),
+		order: self.order,
+		count: self.count,
+	}
+
+	copy(c.sel, self.sel)
+	for i, n := range self.ind {
+		s := &c.ind[i]
 		s.label = n.label
 		if n.nodes != nil {
 			s.nodes = make([]int, len(n.nodes))
 			copy(s.nodes, n.nodes)
 		}
 	}
+
+	return
 }
 
 func (self *kargerRP) fastRandMinCut() {
-	self.depth++
 	if self.order <= 6 {
 		self.randCompact(2)
 		return
@@ -341,16 +347,17 @@ func (self *kargerRP) fastRandMinCut() {
 	t := int(math.Ceil(float64(self.order)/sqrt2 + 1))
 
 	var wg *sync.WaitGroup
-	if self.depth < self.split {
+	if self.count < self.split {
 		wg = &sync.WaitGroup{}
 	}
+	self.count++
 
-	sub := []*kargerRP{self, newKargerRP(self.g)}
-	sub[1].copy(self)
+	sub := []*kargerRP{self, self.clone()}
 	for i := range sub {
 		if wg != nil {
 			wg.Add(1)
 			go func(i int) {
+				runtime.LockOSThread()
 				defer wg.Done()
 				sub[i].randContract(t)
 				sub[i].fastRandMinCut()
