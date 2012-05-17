@@ -288,7 +288,7 @@ func (self *Undirected) newEdgeKeepID(id int, u, v *Node, w float64, f EdgeFlags
 	return
 }
 
-// Connect creats a new edge joining nodes u and v with weight w, and specifying edge flags f.
+// Connect creates a new edge joining nodes u and v with weight w, and specifying edge flags f.
 // The new edge is returned on success. An error is returned if either of the nodes does not
 // exist.
 func (self *Undirected) Connect(u, v *Node, w float64, f EdgeFlags) (e *Edge, err error) {
@@ -311,7 +311,7 @@ func (self *Undirected) Connect(u, v *Node, w float64, f EdgeFlags) (e *Edge, er
 	return
 }
 
-// Connect creats a new edge joining nodes with IDs uid and vid with weight w, and specifying edge
+// Connect creates a new edge joining nodes with IDs uid and vid with weight w, and specifying edge
 // flags f. The id of the new edge is returned on success. An error is returned if either of the
 // nodes does not exist.
 func (self *Undirected) ConnectByID(uid, vid int, w float64, f EdgeFlags) (id int, err error) {
@@ -437,7 +437,7 @@ func (self *Undirected) ConnectedComponents(ef EdgeFilter) (cc [][]*Node) {
 		if df.Visited(s) {
 			continue
 		}
-		df.Search(s, ef, f)
+		df.Search(s, ef, f, nil)
 		cc = append(cc, []*Node{})
 		cc[len(cc)-1] = append(cc[len(cc)-1], c...)
 		c = c[:0]

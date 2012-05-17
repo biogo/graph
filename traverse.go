@@ -21,6 +21,10 @@ import (
 
 var notFound = errors.New("graph: target not found")
 
+// Visit is a function type that is used by a BreadthFirst or DepthFirst to allow side-effects
+// on visiting new nodes in a graph traversal.
+type Visit func(u, v *Node)
+
 // BreadthFirst is a type that can perform a breadth-first search on a graph.
 type BreadthFirst struct {
 	q      *queue
@@ -34,8 +38,10 @@ func NewBreadthFirst() *BreadthFirst {
 
 // Search searches a graph starting from node s until the NodeFilter function nf returns a value of
 // true, traversing edges in the graph that allow the Edgefilter function ef to return true. On success
-// the terminating node, t is returned. If no node is found an error is returned.
-func (self *BreadthFirst) Search(s *Node, ef EdgeFilter, nf NodeFilter) (t *Node, err error) {
+// the terminating node, t is returned. If vo is not nil, it is called with the start and end nodes of an
+// edge when the end node has not already been visited. If no node is found that satisfies nf, an error
+// is returned.
+func (self *BreadthFirst) Search(s *Node, ef EdgeFilter, nf NodeFilter, vo Visit) (t *Node, err error) {
 	self.q.Enqueue(s)
 	self.visits = mark(s, self.visits)
 	for self.q.Len() > 0 {
@@ -48,6 +54,9 @@ func (self *BreadthFirst) Search(s *Node, ef EdgeFilter, nf NodeFilter) (t *Node
 		}
 		for _, n := range t.Neighbors(ef) {
 			if !self.Visited(n) {
+				if vo != nil {
+					vo(t, n)
+				}
 				self.visits = mark(n, self.visits)
 				self.q.Enqueue(n)
 			}
@@ -85,8 +94,10 @@ func NewDepthFirst() *DepthFirst {
 
 // Search searches a graph starting from node s until the NodeFilter function nf returns a value of
 // true, traversing edges in the graph that allow the Edgefilter function ef to return true. On success
-// the terminating node, t is returned. If no node is found an error is returned.
-func (self *DepthFirst) Search(s *Node, ef EdgeFilter, nf NodeFilter) (t *Node, err error) {
+// the terminating node, t is returned. If vo is not nil, it is called with the start and end nodes of an
+// edge when the end node has not already been visited. If no node is found that satisfies nf, an error
+// is returned.
+func (self *DepthFirst) Search(s *Node, ef EdgeFilter, nf NodeFilter, vo Visit) (t *Node, err error) {
 	self.s.Push(s)
 	self.visits = mark(s, self.visits)
 	for self.s.Len() > 0 {
@@ -99,6 +110,9 @@ func (self *DepthFirst) Search(s *Node, ef EdgeFilter, nf NodeFilter) (t *Node, 
 		}
 		for _, n := range t.Neighbors(ef) {
 			if !self.Visited(n) {
+				if vo != nil {
+					vo(t, n)
+				}
 				self.visits = mark(n, self.visits)
 				self.s.Push(n)
 			}
