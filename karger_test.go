@@ -1,5 +1,3 @@
-package graph
-
 // Copyright ©2012 Dan Kortschak <dan.kortschak@adelaide.edu.au>
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,6 +12,8 @@ package graph
 //
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+package graph
 
 import (
 	check "launchpad.net/gocheck"
@@ -86,8 +86,8 @@ var (
 )
 
 // Helpers
-func createGraph(nodes []N) (g *Undirected) {
-	g = NewUndirected()
+func createGraph(nodes []N) *Undirected {
+	g := NewUndirected()
 	for _, n := range nodes {
 		h, _ := g.Add(n.id)
 		for _, tid := range n.tails {
@@ -98,7 +98,7 @@ func createGraph(nodes []N) (g *Undirected) {
 		}
 	}
 
-	return
+	return g
 }
 
 // Tests

@@ -1,5 +1,3 @@
-package graph
-
 // Copyright ©2012 Dan Kortschak <dan.kortschak@adelaide.edu.au>
 //
 // This program is free software: you can redistribute it and/or modify
@@ -15,11 +13,13 @@ package graph
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+package graph
+
 import (
 	"errors"
 )
 
-var notFound = errors.New("graph: target not found")
+var notFound = errors.New("graph: target not found") // TODO: Remove this. Just return nil *Node when not found.
 
 // Visit is a function type that is used by a BreadthFirst or DepthFirst to allow side-effects
 // on visiting new nodes in a graph traversal.
@@ -41,24 +41,24 @@ func NewBreadthFirst() *BreadthFirst {
 // the terminating node, t is returned. If vo is not nil, it is called with the start and end nodes of an
 // edge when the end node has not already been visited. If no node is found that satisfies nf, an error
 // is returned.
-func (self *BreadthFirst) Search(s *Node, ef EdgeFilter, nf NodeFilter, vo Visit) (t *Node, err error) {
-	self.q.Enqueue(s)
-	self.visits = mark(s, self.visits)
-	for self.q.Len() > 0 {
-		t, err = self.q.Dequeue()
+func (b *BreadthFirst) Search(s *Node, ef EdgeFilter, nf NodeFilter, vo Visit) (*Node, error) {
+	b.q.Enqueue(s)
+	b.visits = mark(s, b.visits)
+	for b.q.Len() > 0 {
+		t, err := b.q.Dequeue()
 		if err != nil {
-			return nil, err
+			return nil, err // FIXME: Can replace this with panic when notFound is removed.
 		}
 		if nf(t) {
-			return
+			return t, nil
 		}
 		for _, n := range t.Neighbors(ef) {
-			if !self.Visited(n) {
+			if !b.Visited(n) {
 				if vo != nil {
 					vo(t, n)
 				}
-				self.visits = mark(n, self.visits)
-				self.q.Enqueue(n)
+				b.visits = mark(n, b.visits)
+				b.q.Enqueue(n)
 			}
 		}
 	}
@@ -67,18 +67,18 @@ func (self *BreadthFirst) Search(s *Node, ef EdgeFilter, nf NodeFilter, vo Visit
 }
 
 // Visited marks the node n as having been visited by the sercher.
-func (self *BreadthFirst) Visited(n *Node) bool {
+func (b *BreadthFirst) Visited(n *Node) bool {
 	id := n.id
-	if id < 0 || id >= len(self.visits) {
+	if id < 0 || id >= len(b.visits) {
 		return false
 	}
-	return self.visits[n.id]
+	return b.visits[n.id]
 }
 
 // Reset clears the search queue and visited list.
-func (self *BreadthFirst) Reset() {
-	self.q.Clear()
-	self.visits = self.visits[:0]
+func (b *BreadthFirst) Reset() {
+	b.q.Clear()
+	b.visits = b.visits[:0]
 }
 
 // DepthFirst is a type that can perform a depth-first search on a graph.
@@ -97,24 +97,24 @@ func NewDepthFirst() *DepthFirst {
 // the terminating node, t is returned. If vo is not nil, it is called with the start and end nodes of an
 // edge when the end node has not already been visited. If no node is found that satisfies nf, an error
 // is returned.
-func (self *DepthFirst) Search(s *Node, ef EdgeFilter, nf NodeFilter, vo Visit) (t *Node, err error) {
-	self.s.Push(s)
-	self.visits = mark(s, self.visits)
-	for self.s.Len() > 0 {
-		t, err = self.s.Pop()
+func (d *DepthFirst) Search(s *Node, ef EdgeFilter, nf NodeFilter, vo Visit) (*Node, error) {
+	d.s.Push(s)
+	d.visits = mark(s, d.visits)
+	for d.s.Len() > 0 {
+		t, err := d.s.Pop()
 		if err != nil {
-			return nil, err
+			return nil, err // FIXME: Can replace this with panic when notFound is removed.
 		}
 		if nf(t) {
-			return
+			return t, nil
 		}
 		for _, n := range t.Neighbors(ef) {
-			if !self.Visited(n) {
+			if !d.Visited(n) {
 				if vo != nil {
 					vo(t, n)
 				}
-				self.visits = mark(n, self.visits)
-				self.s.Push(n)
+				d.visits = mark(n, d.visits)
+				d.s.Push(n)
 			}
 		}
 	}
@@ -123,18 +123,18 @@ func (self *DepthFirst) Search(s *Node, ef EdgeFilter, nf NodeFilter, vo Visit) 
 }
 
 // Visited marks the node n as having been visited by the sercher.
-func (self *DepthFirst) Visited(n *Node) bool {
+func (d *DepthFirst) Visited(n *Node) bool {
 	id := n.id
-	if id < 0 || id >= len(self.visits) {
+	if id < 0 || id >= len(d.visits) {
 		return false
 	}
-	return self.visits[n.id]
+	return d.visits[n.id]
 }
 
 // Reset clears the search stack and visited list.
-func (self *DepthFirst) Reset() {
-	self.s.Clear()
-	self.visits = self.visits[:0]
+func (d *DepthFirst) Reset() {
+	d.s.Clear()
+	d.visits = d.visits[:0]
 }
 
 func mark(n *Node, v []bool) []bool {

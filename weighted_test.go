@@ -1,5 +1,3 @@
-package graph
-
 // Copyright ©2012 Dan Kortschak <dan.kortschak@adelaide.edu.au>
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,6 +12,8 @@ package graph
 //
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+package graph
 
 import (
 	check "launchpad.net/gocheck"
@@ -142,7 +142,7 @@ func (s *S) TestWeightedTimeSeeded(c *check.C) {
 		exp[i] *= fac
 	}
 
-	// Check that our obtained values are within statistical expectaions for p = 0.05.
+	// Check that our obtained values are within statistical expectations for p = 0.05.
 	// This will not be true approximately 1 in 20 tests.
 	X := chi2(f, exp)
 	c.Logf("H₀: d(Sample) = d(Expect), H₁: d(S) ≠ d(Expect). df = %d, p = 0.05, X² threshold = %.2f, X² = %f", len(f)-1, sigChi2, X)

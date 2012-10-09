@@ -1,5 +1,3 @@
-package graph
-
 // Copyright ©2012 Dan Kortschak <dan.kortschak@adelaide.edu.au>
 //
 // This program is free software: you can redistribute it and/or modify
@@ -15,6 +13,8 @@ package graph
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+package graph
+
 import (
 	"fmt"
 	"math"
@@ -26,7 +26,7 @@ import (
 // linked list approach
 
 func RandMinCutLL(g *Undirected) (c []*Edge, w float64) {
-	k := newKargerLL(g)
+	ka := newKargerLL(g)
 	w = float64(g.Size())
 	var cw float64
 	lim := int64(g.Order()) * int64(g.Order()) * int64(math.Log(float64(g.Order()))+1)
@@ -35,7 +35,7 @@ func RandMinCutLL(g *Undirected) (c []*Edge, w float64) {
 	for i := int64(0); i < lim; i++ {
 		fmt.Println(i, w, time.Now().Sub(last))
 		last = time.Now()
-		c, cw = k.randMinCut()
+		c, cw = ka.randMinCut()
 		if cw < w {
 			w = cw
 		}
@@ -69,59 +69,59 @@ func newKargerLL(g *Undirected) *kargerLL {
 	}
 }
 
-func (self *kargerLL) init() {
-	for i := range self.ind {
-		self.ind[i].label = -1
-		for n := self.ind[i].nodes; n != nil; n, n.next, n.id = n.next, nil, 0 {
+func (ka *kargerLL) init() {
+	for i := range ka.ind {
+		ka.ind[i].label = -1
+		for n := ka.ind[i].nodes; n != nil; n, n.next, n.id = n.next, nil, 0 {
 		}
-		self.ind[i].nodes, self.ind[i].end = nil, nil
+		ka.ind[i].nodes, ka.ind[i].end = nil, nil
 	}
-	for _, n := range self.g.Nodes() {
+	for _, n := range ka.g.Nodes() {
 		id := n.ID()
-		self.ind[id].label = id
+		ka.ind[id].label = id
 	}
-	for i, e := range self.g.Edges() {
-		self.sel[i] = WeightedItem{Index: e.ID(), Weight: e.Weight()}
+	for i, e := range ka.g.Edges() {
+		ka.sel[i] = WeightedItem{Index: e.ID(), Weight: e.Weight()}
 	}
-	self.sel.Init()
+	ka.sel.Init()
 }
 
-func (self *kargerLL) randMinCut() (c []*Edge, w float64) {
-	self.init()
-	for k := self.g.Order(); k > 2; {
-		id, err := self.sel.Select()
+func (ka *kargerLL) randMinCut() (c []*Edge, w float64) {
+	ka.init()
+	for k := ka.g.Order(); k > 2; {
+		id, err := ka.sel.Select()
 		if err != nil {
 			break
 		}
 
-		e := self.g.Edge(id)
-		if self.loop(e) {
+		e := ka.g.Edge(id)
+		if ka.loop(e) {
 			continue
 		}
 
 		hid, tid := e.Head().ID(), e.Tail().ID()
-		hl, tl := self.ind[hid].label, self.ind[tid].label
+		hl, tl := ka.ind[hid].label, ka.ind[tid].label
 
-		if self.ind[hl].nodes == nil {
-			self.ind[hl].nodes = &kargerNode{id: hid}
-			self.ind[hl].end = self.ind[hl].nodes
+		if ka.ind[hl].nodes == nil {
+			ka.ind[hl].nodes = &kargerNode{id: hid}
+			ka.ind[hl].end = ka.ind[hl].nodes
 		}
-		if self.ind[tl].nodes == nil {
-			self.ind[hl].nodes = &kargerNode{id: tid, next: self.ind[hl].nodes}
+		if ka.ind[tl].nodes == nil {
+			ka.ind[hl].nodes = &kargerNode{id: tid, next: ka.ind[hl].nodes}
 		} else {
-			self.ind[tl].end.next = self.ind[hl].nodes
-			self.ind[hl].nodes = self.ind[tl].nodes
-			self.ind[tl].nodes, self.ind[tl].end = nil, nil
+			ka.ind[tl].end.next = ka.ind[hl].nodes
+			ka.ind[hl].nodes = ka.ind[tl].nodes
+			ka.ind[tl].nodes, ka.ind[tl].end = nil, nil
 		}
-		for n := self.ind[hl].nodes; n != nil; n = n.next {
-			self.ind[n.id].label = self.ind[hid].label
+		for n := ka.ind[hl].nodes; n != nil; n = n.next {
+			ka.ind[n.id].label = ka.ind[hid].label
 		}
 
 		k--
 	}
 
-	for _, e := range self.g.Edges() {
-		if self.loop(e) {
+	for _, e := range ka.g.Edges() {
+		if ka.loop(e) {
 			continue
 		}
 		c = append(c, e)
@@ -131,6 +131,6 @@ func (self *kargerLL) randMinCut() (c []*Edge, w float64) {
 	return
 }
 
-func (self *kargerLL) loop(e *Edge) bool {
-	return self.ind[e.Head().ID()].label == self.ind[e.Tail().ID()].label
+func (ka *kargerLL) loop(e *Edge) bool {
+	return ka.ind[e.Head().ID()].label == ka.ind[e.Tail().ID()].label
 }

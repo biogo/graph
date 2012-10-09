@@ -1,6 +1,3 @@
-// Package graph implements graph manipulation functions.
-package graph
-
 // Copyright ©2012 Dan Kortschak <dan.kortschak@adelaide.edu.au>
 //
 // This program is free software: you can redistribute it and/or modify
@@ -15,3 +12,6 @@ package graph
 //
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+// Package graph implements graph manipulation functions.
+package graph

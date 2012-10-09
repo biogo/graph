@@ -1,5 +1,3 @@
-package graph
-
 // Copyright ©2012 Dan Kortschak <dan.kortschak@adelaide.edu.au>
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,6 +12,8 @@ package graph
 //
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+package graph
 
 import (
 	"errors"
@@ -49,89 +49,89 @@ func newEdge(id, i int, u, v *Node, w float64, f EdgeFlags) *Edge {
 }
 
 // Name returns the name of a node.
-func (self *Edge) Name() string {
-	return self.name
+func (e *Edge) Name() string {
+	return e.name
 }
 
 // SetName sets the name of a node to n.
-func (self *Edge) SetName(n string) {
-	self.name = n
+func (e *Edge) SetName(n string) {
+	e.name = n
 }
 
 // ID returns the id of the edge.
-func (self *Edge) ID() int {
-	return self.id
+func (e *Edge) ID() int {
+	return e.id
 }
 
 // Index returns the index of the edge in the compact edge list of the graph. The value returned
 // cannot be reliably used after an edge deletion.
-func (self *Edge) Index() int {
-	return self.i
+func (e *Edge) Index() int {
+	return e.i
 }
 
 // Nodes returns the two nodes, u and v, that are joined by the edge.
-func (self *Edge) Nodes() (u, v *Node) {
-	return self.u, self.v
+func (e *Edge) Nodes() (u, v *Node) {
+	return e.u, e.v
 }
 
 // Head returns the first node of an edge's node pair.
-func (self *Edge) Head() (v *Node) {
-	return self.v
+func (e *Edge) Head() *Node {
+	return e.v
 }
 
 // Tail returns the second node of an edge's node pair.
-func (self *Edge) Tail() (u *Node) {
-	return self.u
+func (e *Edge) Tail() *Node {
+	return e.u
 }
 
 // Weight returns the weight of the edge.
-func (self *Edge) Weight() (w float64) {
-	return self.weight
+func (e *Edge) Weight() float64 {
+	return e.weight
 }
 
 // SetWeight sets the weight of the edge to w.
-func (self *Edge) SetWeight(w float64) {
-	self.weight = w
+func (e *Edge) SetWeight(w float64) {
+	e.weight = w
 }
 
 // Flags returns the flags value for the edge. One flag is currently defined, EdgeCut.
-func (self *Edge) Flags() EdgeFlags {
-	return self.flags
+func (e *Edge) Flags() EdgeFlags {
+	return e.flags
 }
 
 // SetFlags sets the flags of the edge. One flag is currently defined, EdgeCut.
-func (self *Edge) SetFlags(f EdgeFlags) {
-	self.flags = f
+func (e *Edge) SetFlags(f EdgeFlags) {
+	e.flags = f
 }
 
-func (self *Edge) reconnect(u, v *Node) {
+func (e *Edge) reconnect(u, v *Node) {
 	switch u {
-	case self.u:
-		self.u = v
-	case self.v:
-		self.v = v
+	case e.u:
+		e.u = v
+	case e.v:
+		e.v = v
 	}
 }
 
-func (self *Edge) disconnect(n *Node) {
+func (e *Edge) disconnect(n *Node) {
 	switch n {
-	case self.u:
-		self.u.drop(self)
-		self.u = nil
-	case self.v:
-		self.v.drop(self)
-		self.v = nil
+	case e.u:
+		e.u.drop(e)
+		e.u = nil
+	case e.v:
+		e.v.drop(e)
+		e.v = nil
 	}
 }
 
-func (self *Edge) connect(n *Node) (err error) {
+func (e *Edge) connect(n *Node) (err error) {
 	switch (*Node)(nil) {
-	case self.u:
-		self.u = n
-		self.u.add(self)
-	case self.v:
-		self.v = n
-		self.v.add(self)
+	case e.u:
+		e.u = n
+		e.u.add(e)
+	case e.v:
+		e.v = n
+		e.v.add(e)
 	default:
 		err = alreadyConnected
 	}
@@ -139,21 +139,21 @@ func (self *Edge) connect(n *Node) (err error) {
 	return
 }
 
-func (self *Edge) String() string {
-	return fmt.Sprintf("%d--%d", self.u.ID(), self.v.ID())
+func (e *Edge) String() string {
+	return fmt.Sprintf("%d--%d", e.u.ID(), e.v.ID())
 }
 
 // Edges is a collection of edges used for internal representation of edge lists in a graph. 
 type Edges []*Edge
 
-func (self Edges) delFromGraph(i int) Edges {
-	self[i], self[len(self)-1] = self[len(self)-1], self[i]
-	self[i].i = i
-	self[len(self)-1].i = -1
-	return self[:len(self)-1]
+func (e Edges) delFromGraph(i int) Edges {
+	e[i], e[len(e)-1] = e[len(e)-1], e[i]
+	e[i].i = i
+	e[len(e)-1].i = -1
+	return e[:len(e)-1]
 }
 
-func (self Edges) delFromNode(i int) Edges {
-	self[i], self[len(self)-1] = self[len(self)-1], self[i]
-	return self[:len(self)-1]
+func (e Edges) delFromNode(i int) Edges {
+	e[i], e[len(e)-1] = e[len(e)-1], e[i]
+	return e[:len(e)-1]
 }

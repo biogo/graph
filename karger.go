@@ -1,5 +1,3 @@
-package graph
-
 // Copyright ©2012 Dan Kortschak <dan.kortschak@adelaide.edu.au>
 //
 // This program is free software: you can redistribute it and/or modify
@@ -15,6 +13,8 @@ package graph
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+package graph
+
 import (
 	"fmt"
 	"math"
@@ -26,7 +26,7 @@ import (
 // array approach
 
 func RandMinCut(g *Undirected) (c []*Edge, w float64) {
-	k := newKarger(g)
+	ka := newKarger(g)
 	w = float64(g.Size())
 	var cw float64
 	lim := int64(g.Order()) * int64(g.Order()) * int64(math.Log(float64(g.Order()))+1)
@@ -35,7 +35,7 @@ func RandMinCut(g *Undirected) (c []*Edge, w float64) {
 	for i := int64(0); i < lim; i++ {
 		fmt.Println(i, w, time.Now().Sub(last))
 		last = time.Now()
-		c, cw = k.randMinCut()
+		c, cw = ka.randMinCut()
 		if cw < w {
 			w = cw
 		}
@@ -58,45 +58,45 @@ func newKarger(g *Undirected) *karger {
 	}
 }
 
-func (self *karger) init() {
-	for i := range self.label {
-		self.label[i] = -1
+func (ka *karger) init() {
+	for i := range ka.label {
+		ka.label[i] = -1
 	}
-	for _, n := range self.g.Nodes() {
+	for _, n := range ka.g.Nodes() {
 		id := n.ID()
-		self.label[id] = id
+		ka.label[id] = id
 	}
-	for i, e := range self.g.Edges() {
-		self.sel[i] = WeightedItem{Index: e.ID(), Weight: e.Weight()}
+	for i, e := range ka.g.Edges() {
+		ka.sel[i] = WeightedItem{Index: e.ID(), Weight: e.Weight()}
 	}
-	self.sel.Init()
+	ka.sel.Init()
 }
 
-func (self *karger) randMinCut() (c []*Edge, w float64) {
-	self.init()
-	for k := self.g.Order(); k > 2; {
-		id, err := self.sel.Select()
+func (ka *karger) randMinCut() (c []*Edge, w float64) {
+	ka.init()
+	for k := ka.g.Order(); k > 2; {
+		id, err := ka.sel.Select()
 		if err != nil {
 			break
 		}
 
-		e := self.g.Edge(id)
-		if self.loop(e) {
+		e := ka.g.Edge(id)
+		if ka.loop(e) {
 			continue
 		}
 
-		j := self.label[e.Tail().ID()]
-		for i, l := range self.label {
+		j := ka.label[e.Tail().ID()]
+		for i, l := range ka.label {
 			if l != j {
 				continue
 			}
-			self.label[i] = self.label[e.Head().ID()]
+			ka.label[i] = ka.label[e.Head().ID()]
 		}
 
 		k--
 	}
-	for _, e := range self.g.Edges() {
-		if self.loop(e) {
+	for _, e := range ka.g.Edges() {
+		if ka.loop(e) {
 			continue
 		}
 		c = append(c, e)
@@ -106,6 +106,6 @@ func (self *karger) randMinCut() (c []*Edge, w float64) {
 	return
 }
 
-func (self *karger) loop(e *Edge) bool {
-	return self.label[e.Head().ID()] == self.label[e.Tail().ID()]
+func (ka *karger) loop(e *Edge) bool {
+	return ka.label[e.Head().ID()] == ka.label[e.Tail().ID()]
 }

@@ -1,5 +1,3 @@
-package graph
-
 // Copyright ©2012 Dan Kortschak <dan.kortschak@adelaide.edu.au>
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,6 +12,8 @@ package graph
 //
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+package graph
 
 import (
 	"fmt"
@@ -45,80 +45,82 @@ type Hop struct {
 }
 
 // Name returns the name of a node.
-func (self *Node) Name() string {
-	return self.name
+func (n *Node) Name() string {
+	return n.name
 }
 
-// SetName sets the name of a node to n.
-func (self *Node) SetName(n string) {
-	self.name = n
+// SetName sets the name of a node.
+func (n *Node) SetName(name string) {
+	n.name = name
 }
 
 // ID returns the id of a node.
-func (self *Node) ID() int {
-	return self.id
+func (n *Node) ID() int {
+	return n.id
 }
 
 // Edges returns a slice of edges that are incident on the node.
-func (self *Node) Edges() []*Edge {
-	return self.edges
+func (n *Node) Edges() []*Edge {
+	return n.edges
 }
 
 // Degree returns the number of incident edges on a node. Looped edges are counted at both ends.
-func (self *Node) Degree() int {
+func (n *Node) Degree() int {
 	l := 0
-	for _, e := range self.edges {
+	for _, e := range n.edges {
 		if e.Head() == e.Tail() {
 			l++
 		}
 	}
-	return l + len(self.edges)
+	return l + len(n.edges)
 }
 
 // Neighbors returns a slice of nodes that share an edge with the node. Multiply connected nodes are
-// repeated in the slice. If the node is self-connected it will be included in the slice, potentially
-// repeatedly if there are multiple self-connecting edges.
-func (self *Node) Neighbors(ef EdgeFilter) (n []*Node) {
-	for _, e := range self.edges {
+// repeated in the slice. If the node is n-connected it will be included in the slice, potentially
+// repeatedly if there are multiple n-connecting edges.
+func (n *Node) Neighbors(ef EdgeFilter) []*Node {
+	var nodes []*Node
+	for _, e := range n.edges {
 		if ef(e) {
-			if a := e.Tail(); a == self {
-				n = append(n, e.Head())
+			if a := e.Tail(); a == n {
+				nodes = append(nodes, e.Head())
 			} else {
-				n = append(n, a)
+				nodes = append(nodes, a)
 			}
 		}
 	}
-	return
+	return nodes
 }
 
 // Hops has essentially the same functionality as Neighbors with the exception that the connecting
 // edge is also returned.
-func (self *Node) Hops(ef EdgeFilter) (h []*Hop) {
-	for _, e := range self.edges {
+func (n *Node) Hops(ef EdgeFilter) []*Hop {
+	var h []*Hop
+	for _, e := range n.edges {
 		if ef(e) {
-			if a := e.Tail(); a == self {
+			if a := e.Tail(); a == n {
 				h = append(h, &Hop{e, e.Head()})
 			} else {
 				h = append(h, &Hop{e, a})
 			}
 		}
 	}
-	return
+	return h
 }
 
-func (self *Node) add(e *Edge) { self.edges = append(self.edges, e) }
+func (n *Node) add(e *Edge) { n.edges = append(n.edges, e) }
 
-func (self *Node) dropAll() {
-	for i := range self.edges {
-		self.edges[i] = nil
+func (n *Node) dropAll() {
+	for i := range n.edges {
+		n.edges[i] = nil
 	}
-	self.edges = self.edges[:0]
+	n.edges = n.edges[:0]
 }
 
-func (self *Node) drop(e *Edge) {
-	for i := 0; i < len(self.edges); {
-		if self.edges[i] == e {
-			self.edges = self.edges.delFromNode(i)
+func (n *Node) drop(e *Edge) {
+	for i := 0; i < len(n.edges); {
+		if n.edges[i] == e {
+			n.edges = n.edges.delFromNode(i)
 			return // assumes e has not been added more than once - this should not happen, but we don't check for it
 		} else {
 			i++
@@ -126,16 +128,16 @@ func (self *Node) drop(e *Edge) {
 	}
 }
 
-func (self *Node) String() string {
-	return fmt.Sprintf("%d:%v", self.id, self.edges)
+func (n *Node) String() string {
+	return fmt.Sprintf("%d:%v", n.id, n.edges)
 }
 
 // Nodes is a collection of nodes used for internal representation of node lists in a graph.
 type Nodes []*Node
 
-func (self Nodes) delFromGraph(i int) Nodes {
-	self[i], self[len(self)-1] = self[len(self)-1], self[i]
-	self[i].index = i
-	self[len(self)-1].index = -1
-	return self[:len(self)-1]
+func (n Nodes) delFromGraph(i int) Nodes {
+	n[i], n[len(n)-1] = n[len(n)-1], n[i]
+	n[i].index = i
+	n[len(n)-1].index = -1
+	return n[:len(n)-1]
 }

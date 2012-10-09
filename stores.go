@@ -1,5 +1,3 @@
-package graph
-
 // Copyright ©2012 Dan Kortschak <dan.kortschak@adelaide.edu.au>
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,6 +12,8 @@ package graph
 //
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+package graph
 
 import (
 	"errors"
@@ -31,72 +31,74 @@ type queue struct {
 	data []*Node
 }
 
-func (self *queue) Enqueue(n *Node) {
-	if len(self.data) == cap(self.data) && self.head > 0 {
-		l := self.Len()
-		copy(self.data, self.data[self.head:])
-		self.head = 0
-		self.data = append(self.data[:l], n)
+func (q *queue) Enqueue(n *Node) {
+	if len(q.data) == cap(q.data) && q.head > 0 {
+		l := q.Len()
+		copy(q.data, q.data[q.head:])
+		q.head = 0
+		q.data = append(q.data[:l], n)
 	} else {
-		self.data = append(self.data, n)
+		q.data = append(q.data, n)
 	}
 }
 
-func (self *queue) Dequeue() (n *Node, err error) {
-	if self.Len() == 0 {
+func (q *queue) Dequeue() (*Node, error) {
+	if q.Len() == 0 {
 		return nil, emptyQueue
 	}
 
-	n, self.data[self.head] = self.data[self.head], nil
-	self.head++
+	var n *Node
+	n, q.data[q.head] = q.data[q.head], nil
+	q.head++
 
-	if self.Len() == 0 {
-		self.head = 0
-		self.data = self.data[:0]
+	if q.Len() == 0 {
+		q.head = 0
+		q.data = q.data[:0]
 	}
 
-	return
+	return n, nil
 }
 
-func (self *queue) Peek(i int) (n *Node, err error) {
-	if i < self.head || i >= len(self.data) {
+func (q *queue) Peek(i int) (*Node, error) {
+	if i < q.head || i >= len(q.data) {
 		return nil, queueIndexOutOfRange
 	}
-	return self.data[i+self.head], nil
+	return q.data[i+q.head], nil
 }
 
-func (self *queue) Clear() {
-	self.head = 0
-	self.data = self.data[:0]
+func (q *queue) Clear() {
+	q.head = 0
+	q.data = q.data[:0]
 }
 
-func (self *queue) Len() int { return len(self.data) - self.head }
+func (q *queue) Len() int { return len(q.data) - q.head }
 
 type stack struct {
 	data []*Node
 }
 
-func (self *stack) Push(n *Node) { self.data = append(self.data, n) }
+func (s *stack) Push(n *Node) { s.data = append(s.data, n) }
 
-func (self *stack) Pop() (n *Node, err error) {
-	if len(self.data) == 0 {
+func (s *stack) Pop() (*Node, error) {
+	if len(s.data) == 0 {
 		return nil, emptyStack
 	}
 
-	n, self.data, self.data[len(self.data)-1] = self.data[len(self.data)-1], self.data[:len(self.data)-1], nil
+	var n *Node
+	n, s.data, s.data[len(s.data)-1] = s.data[len(s.data)-1], s.data[:len(s.data)-1], nil
 
-	return
+	return n, nil
 }
 
-func (self *stack) Peek(i int) (n *Node, err error) {
-	if i < 0 || i >= len(self.data) {
+func (s *stack) Peek(i int) (*Node, error) {
+	if i < 0 || i >= len(s.data) {
 		return nil, stackIndexOutOfRange
 	}
-	return self.data[i], nil
+	return s.data[i], nil
 }
 
-func (self *stack) Clear() {
-	self.data = self.data[:0]
+func (s *stack) Clear() {
+	s.data = s.data[:0]
 }
 
-func (self *stack) Len() int { return len(self.data) }
+func (s *stack) Len() int { return len(s.data) }

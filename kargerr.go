@@ -1,5 +1,3 @@
-package graph
-
 // Copyright ©2012 Dan Kortschak <dan.kortschak@adelaide.edu.au>
 //
 // This program is free software: you can redistribute it and/or modify
@@ -15,6 +13,8 @@ package graph
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+package graph
+
 import (
 	"math"
 	"runtime"
@@ -28,14 +28,14 @@ const sqrt2 = 1.4142135623730950488016887242096980785696718753769480
 var MaxProcs = runtime.GOMAXPROCS(0)
 
 func FastRandMinCut(g *Undirected, iter int) (c []*Edge, w float64) {
-	k := newKargerR(g)
-	k.init()
+	ka := newKargerR(g)
+	ka.init()
 	w = math.Inf(1)
 	for i := 0; i < iter; i++ {
-		k.fastRandMinCut()
-		if k.w < w {
-			w = k.w
-			c = k.c
+		ka.fastRandMinCut()
+		if ka.w < w {
+			w = ka.w
+			c = ka.c
 		}
 	}
 
@@ -70,17 +70,17 @@ func FastRandMinCutPar(g *Undirected, iter, thread int) (c []*Edge, w float64) {
 		wg.Add(1)
 		go func(j, iter int) {
 			defer wg.Done()
-			k := newKargerR(g)
-			k.init()
+			ka := newKargerR(g)
+			ka.init()
 			var (
 				w = math.Inf(1)
 				c []*Edge
 			)
 			for i := 0; i < iter; i++ {
-				k.fastRandMinCut()
-				if k.w < w {
-					w = k.w
-					c = k.c
+				ka.fastRandMinCut()
+				if ka.w < w {
+					w = ka.w
+					c = ka.c
 				}
 			}
 
@@ -117,32 +117,32 @@ func newKargerR(g *Undirected) *kargerR {
 	}
 }
 
-func (self *kargerR) init() {
-	self.order = self.g.Order()
-	for i := range self.ind {
-		self.ind[i].label = -1
-		self.ind[i].nodes = nil
+func (ka *kargerR) init() {
+	ka.order = ka.g.Order()
+	for i := range ka.ind {
+		ka.ind[i].label = -1
+		ka.ind[i].nodes = nil
 	}
-	for _, n := range self.g.Nodes() {
+	for _, n := range ka.g.Nodes() {
 		id := n.ID()
-		self.ind[id].label = id
+		ka.ind[id].label = id
 	}
-	for i, e := range self.g.Edges() {
-		self.sel[i] = WeightedItem{Index: e.ID(), Weight: e.Weight()}
+	for i, e := range ka.g.Edges() {
+		ka.sel[i] = WeightedItem{Index: e.ID(), Weight: e.Weight()}
 	}
-	self.sel.Init()
+	ka.sel.Init()
 }
 
-func (self *kargerR) clone() (c *kargerR) {
+func (ka *kargerR) clone() (c *kargerR) {
 	c = &kargerR{
-		g:     self.g,
-		ind:   make([]super, self.g.NextNodeID()),
-		sel:   make(Selector, self.g.Size()),
-		order: self.order,
+		g:     ka.g,
+		ind:   make([]super, ka.g.NextNodeID()),
+		sel:   make(Selector, ka.g.Size()),
+		order: ka.order,
 	}
 
-	copy(c.sel, self.sel)
-	for i, n := range self.ind {
+	copy(c.sel, ka.sel)
+	for i, n := range ka.ind {
 		s := &c.ind[i]
 		s.label = n.label
 		if n.nodes != nil {
@@ -154,110 +154,110 @@ func (self *kargerR) clone() (c *kargerR) {
 	return
 }
 
-func (self *kargerR) fastRandMinCut() {
-	if self.order <= 6 {
-		self.randCompact(2)
+func (ka *kargerR) fastRandMinCut() {
+	if ka.order <= 6 {
+		ka.randCompact(2)
 		return
 	}
 
-	t := int(math.Ceil(float64(self.order)/sqrt2 + 1))
+	t := int(math.Ceil(float64(ka.order)/sqrt2 + 1))
 
-	sub := []*kargerR{self, self.clone()}
+	sub := []*kargerR{ka, ka.clone()}
 	for i := range sub {
 		sub[i].randContract(t)
 		sub[i].fastRandMinCut()
 	}
 
 	if sub[0].w < sub[1].w {
-		*self = *sub[0]
+		*ka = *sub[0]
 		return
 	}
-	*self = *sub[1]
+	*ka = *sub[1]
 }
 
-func (self *kargerR) randContract(k int) {
-	for self.order > k {
-		id, err := self.sel.Select()
+func (ka *kargerR) randContract(k int) {
+	for ka.order > k {
+		id, err := ka.sel.Select()
 		if err != nil {
 			break
 		}
 
-		e := self.g.Edge(id)
-		if self.loop(e) {
+		e := ka.g.Edge(id)
+		if ka.loop(e) {
 			continue
 		}
 
 		hid, tid := e.Head().ID(), e.Tail().ID()
-		hl, tl := self.ind[hid].label, self.ind[tid].label
-		if len(self.ind[hl].nodes) < len(self.ind[tl].nodes) {
+		hl, tl := ka.ind[hid].label, ka.ind[tid].label
+		if len(ka.ind[hl].nodes) < len(ka.ind[tl].nodes) {
 			hid, tid = tid, hid
 			hl, tl = tl, hl
 		}
 
-		if self.ind[hl].nodes == nil {
-			self.ind[hl].nodes = []int{hid}
+		if ka.ind[hl].nodes == nil {
+			ka.ind[hl].nodes = []int{hid}
 		}
-		if self.ind[tl].nodes == nil {
-			self.ind[hl].nodes = append(self.ind[hl].nodes, tid)
+		if ka.ind[tl].nodes == nil {
+			ka.ind[hl].nodes = append(ka.ind[hl].nodes, tid)
 		} else {
-			self.ind[hl].nodes = append(self.ind[hl].nodes, self.ind[tl].nodes...)
-			self.ind[tl].nodes = nil
+			ka.ind[hl].nodes = append(ka.ind[hl].nodes, ka.ind[tl].nodes...)
+			ka.ind[tl].nodes = nil
 		}
-		for _, i := range self.ind[hl].nodes {
-			self.ind[i].label = self.ind[hid].label
+		for _, i := range ka.ind[hl].nodes {
+			ka.ind[i].label = ka.ind[hid].label
 		}
 
-		self.order--
+		ka.order--
 	}
 }
 
-func (self *kargerR) randCompact(k int) {
-	for self.order > k {
-		id, err := self.sel.Select()
+func (ka *kargerR) randCompact(k int) {
+	for ka.order > k {
+		id, err := ka.sel.Select()
 		if err != nil {
 			break
 		}
 
-		e := self.g.Edge(id)
-		if self.loop(e) {
+		e := ka.g.Edge(id)
+		if ka.loop(e) {
 			continue
 		}
 
 		hid, tid := e.Head().ID(), e.Tail().ID()
-		hl, tl := self.ind[hid].label, self.ind[tid].label
-		if len(self.ind[hl].nodes) < len(self.ind[tl].nodes) {
+		hl, tl := ka.ind[hid].label, ka.ind[tid].label
+		if len(ka.ind[hl].nodes) < len(ka.ind[tl].nodes) {
 			hid, tid = tid, hid
 			hl, tl = tl, hl
 		}
 
-		if self.ind[hl].nodes == nil {
-			self.ind[hl].nodes = []int{hid}
+		if ka.ind[hl].nodes == nil {
+			ka.ind[hl].nodes = []int{hid}
 		}
-		if self.ind[tl].nodes == nil {
-			self.ind[hl].nodes = append(self.ind[hl].nodes, tid)
+		if ka.ind[tl].nodes == nil {
+			ka.ind[hl].nodes = append(ka.ind[hl].nodes, tid)
 		} else {
-			self.ind[hl].nodes = append(self.ind[hl].nodes, self.ind[tl].nodes...)
-			self.ind[tl].nodes = nil
+			ka.ind[hl].nodes = append(ka.ind[hl].nodes, ka.ind[tl].nodes...)
+			ka.ind[tl].nodes = nil
 		}
-		for _, i := range self.ind[hl].nodes {
-			self.ind[i].label = self.ind[hid].label
+		for _, i := range ka.ind[hl].nodes {
+			ka.ind[i].label = ka.ind[hid].label
 		}
 
-		self.order--
+		ka.order--
 	}
 
-	self.c, self.w = []*Edge{}, 0
-	for _, e := range self.g.Edges() {
-		if self.loop(e) {
+	ka.c, ka.w = []*Edge{}, 0
+	for _, e := range ka.g.Edges() {
+		if ka.loop(e) {
 			continue
 		}
-		self.c = append(self.c, e)
-		self.w += e.Weight()
+		ka.c = append(ka.c, e)
+		ka.w += e.Weight()
 	}
 }
 
-func (self *kargerR) loop(e *Edge) bool {
-	return self.ind[e.Head().ID()].label == self.ind[e.Tail().ID()].label
+func (ka *kargerR) loop(e *Edge) bool {
+	return ka.ind[e.Head().ID()].label == ka.ind[e.Tail().ID()].label
 }
 
 // parallelised within the recursion tree
@@ -300,33 +300,33 @@ func newKargerRP(g *Undirected) *kargerRP {
 	}
 }
 
-func (self *kargerRP) init() {
-	self.order = self.g.Order()
-	for i := range self.ind {
-		self.ind[i].label = -1
-		self.ind[i].nodes = nil
+func (ka *kargerRP) init() {
+	ka.order = ka.g.Order()
+	for i := range ka.ind {
+		ka.ind[i].label = -1
+		ka.ind[i].nodes = nil
 	}
-	for _, n := range self.g.Nodes() {
+	for _, n := range ka.g.Nodes() {
 		id := n.ID()
-		self.ind[id].label = id
+		ka.ind[id].label = id
 	}
-	for i, e := range self.g.Edges() {
-		self.sel[i] = WeightedItem{Index: e.ID(), Weight: e.Weight()}
+	for i, e := range ka.g.Edges() {
+		ka.sel[i] = WeightedItem{Index: e.ID(), Weight: e.Weight()}
 	}
-	self.sel.Init()
+	ka.sel.Init()
 }
 
-func (self *kargerRP) clone() (c *kargerRP) {
+func (ka *kargerRP) clone() (c *kargerRP) {
 	c = &kargerRP{
-		g:     self.g,
-		ind:   make([]super, self.g.NextNodeID()),
-		sel:   make(Selector, self.g.Size()),
-		order: self.order,
-		count: self.count,
+		g:     ka.g,
+		ind:   make([]super, ka.g.NextNodeID()),
+		sel:   make(Selector, ka.g.Size()),
+		order: ka.order,
+		count: ka.count,
 	}
 
-	copy(c.sel, self.sel)
-	for i, n := range self.ind {
+	copy(c.sel, ka.sel)
+	for i, n := range ka.ind {
 		s := &c.ind[i]
 		s.label = n.label
 		if n.nodes != nil {
@@ -338,21 +338,21 @@ func (self *kargerRP) clone() (c *kargerRP) {
 	return
 }
 
-func (self *kargerRP) fastRandMinCut() {
-	if self.order <= 6 {
-		self.randCompact(2)
+func (ka *kargerRP) fastRandMinCut() {
+	if ka.order <= 6 {
+		ka.randCompact(2)
 		return
 	}
 
-	t := int(math.Ceil(float64(self.order)/sqrt2 + 1))
+	t := int(math.Ceil(float64(ka.order)/sqrt2 + 1))
 
 	var wg *sync.WaitGroup
-	if self.count < self.split {
+	if ka.count < ka.split {
 		wg = &sync.WaitGroup{}
 	}
-	self.count++
+	ka.count++
 
-	sub := []*kargerRP{self, self.clone()}
+	sub := []*kargerRP{ka, ka.clone()}
 	for i := range sub {
 		if wg != nil {
 			wg.Add(1)
@@ -373,93 +373,93 @@ func (self *kargerRP) fastRandMinCut() {
 	}
 
 	if sub[0].w < sub[1].w {
-		*self = *sub[0]
+		*ka = *sub[0]
 		return
 	}
-	*self = *sub[1]
+	*ka = *sub[1]
 }
 
-func (self *kargerRP) randContract(k int) {
-	for self.order > k {
-		id, err := self.sel.Select()
+func (ka *kargerRP) randContract(k int) {
+	for ka.order > k {
+		id, err := ka.sel.Select()
 		if err != nil {
 			break
 		}
 
-		e := self.g.Edge(id)
-		if self.loop(e) {
+		e := ka.g.Edge(id)
+		if ka.loop(e) {
 			continue
 		}
 
 		hid, tid := e.Head().ID(), e.Tail().ID()
-		hl, tl := self.ind[hid].label, self.ind[tid].label
-		if len(self.ind[hl].nodes) < len(self.ind[tl].nodes) {
+		hl, tl := ka.ind[hid].label, ka.ind[tid].label
+		if len(ka.ind[hl].nodes) < len(ka.ind[tl].nodes) {
 			hid, tid = tid, hid
 			hl, tl = tl, hl
 		}
 
-		if self.ind[hl].nodes == nil {
-			self.ind[hl].nodes = []int{hid}
+		if ka.ind[hl].nodes == nil {
+			ka.ind[hl].nodes = []int{hid}
 		}
-		if self.ind[tl].nodes == nil {
-			self.ind[hl].nodes = append(self.ind[hl].nodes, tid)
+		if ka.ind[tl].nodes == nil {
+			ka.ind[hl].nodes = append(ka.ind[hl].nodes, tid)
 		} else {
-			self.ind[hl].nodes = append(self.ind[hl].nodes, self.ind[tl].nodes...)
-			self.ind[tl].nodes = nil
+			ka.ind[hl].nodes = append(ka.ind[hl].nodes, ka.ind[tl].nodes...)
+			ka.ind[tl].nodes = nil
 		}
-		for _, i := range self.ind[hl].nodes {
-			self.ind[i].label = self.ind[hid].label
+		for _, i := range ka.ind[hl].nodes {
+			ka.ind[i].label = ka.ind[hid].label
 		}
 
-		self.order--
+		ka.order--
 	}
 }
 
-func (self *kargerRP) randCompact(k int) {
-	for self.order > k {
-		id, err := self.sel.Select()
+func (ka *kargerRP) randCompact(k int) {
+	for ka.order > k {
+		id, err := ka.sel.Select()
 		if err != nil {
 			break
 		}
 
-		e := self.g.Edge(id)
-		if self.loop(e) {
+		e := ka.g.Edge(id)
+		if ka.loop(e) {
 			continue
 		}
 
 		hid, tid := e.Head().ID(), e.Tail().ID()
-		hl, tl := self.ind[hid].label, self.ind[tid].label
-		if len(self.ind[hl].nodes) < len(self.ind[tl].nodes) {
+		hl, tl := ka.ind[hid].label, ka.ind[tid].label
+		if len(ka.ind[hl].nodes) < len(ka.ind[tl].nodes) {
 			hid, tid = tid, hid
 			hl, tl = tl, hl
 		}
 
-		if self.ind[hl].nodes == nil {
-			self.ind[hl].nodes = []int{hid}
+		if ka.ind[hl].nodes == nil {
+			ka.ind[hl].nodes = []int{hid}
 		}
-		if self.ind[tl].nodes == nil {
-			self.ind[hl].nodes = append(self.ind[hl].nodes, tid)
+		if ka.ind[tl].nodes == nil {
+			ka.ind[hl].nodes = append(ka.ind[hl].nodes, tid)
 		} else {
-			self.ind[hl].nodes = append(self.ind[hl].nodes, self.ind[tl].nodes...)
-			self.ind[tl].nodes = nil
+			ka.ind[hl].nodes = append(ka.ind[hl].nodes, ka.ind[tl].nodes...)
+			ka.ind[tl].nodes = nil
 		}
-		for _, i := range self.ind[hl].nodes {
-			self.ind[i].label = self.ind[hid].label
+		for _, i := range ka.ind[hl].nodes {
+			ka.ind[i].label = ka.ind[hid].label
 		}
 
-		self.order--
+		ka.order--
 	}
 
-	self.c, self.w = []*Edge{}, 0
-	for _, e := range self.g.Edges() {
-		if self.loop(e) {
+	ka.c, ka.w = []*Edge{}, 0
+	for _, e := range ka.g.Edges() {
+		if ka.loop(e) {
 			continue
 		}
-		self.c = append(self.c, e)
-		self.w += e.Weight()
+		ka.c = append(ka.c, e)
+		ka.w += e.Weight()
 	}
 }
 
-func (self *kargerRP) loop(e *Edge) bool {
-	return self.ind[e.Head().ID()].label == self.ind[e.Tail().ID()].label
+func (ka *kargerRP) loop(e *Edge) bool {
+	return ka.ind[e.Head().ID()].label == ka.ind[e.Tail().ID()].label
 }
