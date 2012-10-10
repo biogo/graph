@@ -19,53 +19,60 @@ import (
 	"fmt"
 )
 
+type Node interface {
+	ID() int
+	Edges() []Edge
+	Degree() int
+	Neighbors(EdgeFilter) []Node
+	Hops(EdgeFilter) []*Hop
+	String() string
+
+	add(Edge)
+	drop(Edge)
+	dropAll()
+	index() int
+	setIndex(int)
+	setID(int)
+}
+
+var _ Node = &node{}
+
 // NodeFilter is a function type used for assessment of nodes during graph traversal.
-type NodeFilter func(*Node) bool
+type NodeFilter func(Node) bool
 
 // A Node is a node in a graph.
-type Node struct {
-	name  string
+type node struct {
 	id    int
-	index int
+	i     int
 	edges Edges
 }
 
 // newNode creates a new *Nodes with ID id. Nodes should only ever exist in the context of a
 // graph, so this is not a public function.
-func newNode(id int) *Node {
-	return &Node{
+func newNode(id int) Node {
+	return &node{
 		id: id,
 	}
 }
 
 // A Hop is an edge/node pair where the edge leads to the node from a neighbor.
 type Hop struct {
-	Edge *Edge
-	Node *Node
-}
-
-// Name returns the name of a node.
-func (n *Node) Name() string {
-	return n.name
-}
-
-// SetName sets the name of a node.
-func (n *Node) SetName(name string) {
-	n.name = name
+	Edge Edge
+	Node Node
 }
 
 // ID returns the id of a node.
-func (n *Node) ID() int {
+func (n *node) ID() int {
 	return n.id
 }
 
 // Edges returns a slice of edges that are incident on the node.
-func (n *Node) Edges() []*Edge {
+func (n *node) Edges() []Edge {
 	return n.edges
 }
 
 // Degree returns the number of incident edges on a node. Looped edges are counted at both ends.
-func (n *Node) Degree() int {
+func (n *node) Degree() int {
 	l := 0
 	for _, e := range n.edges {
 		if e.Head() == e.Tail() {
@@ -78,8 +85,8 @@ func (n *Node) Degree() int {
 // Neighbors returns a slice of nodes that share an edge with the node. Multiply connected nodes are
 // repeated in the slice. If the node is n-connected it will be included in the slice, potentially
 // repeatedly if there are multiple n-connecting edges.
-func (n *Node) Neighbors(ef EdgeFilter) []*Node {
-	var nodes []*Node
+func (n *node) Neighbors(ef EdgeFilter) []Node {
+	var nodes []Node
 	for _, e := range n.edges {
 		if ef(e) {
 			if a := e.Tail(); a == n {
@@ -94,7 +101,7 @@ func (n *Node) Neighbors(ef EdgeFilter) []*Node {
 
 // Hops has essentially the same functionality as Neighbors with the exception that the connecting
 // edge is also returned.
-func (n *Node) Hops(ef EdgeFilter) []*Hop {
+func (n *node) Hops(ef EdgeFilter) []*Hop {
 	var h []*Hop
 	for _, e := range n.edges {
 		if ef(e) {
@@ -108,16 +115,16 @@ func (n *Node) Hops(ef EdgeFilter) []*Hop {
 	return h
 }
 
-func (n *Node) add(e *Edge) { n.edges = append(n.edges, e) }
+func (n *node) add(e Edge) { n.edges = append(n.edges, e) }
 
-func (n *Node) dropAll() {
+func (n *node) dropAll() {
 	for i := range n.edges {
 		n.edges[i] = nil
 	}
 	n.edges = n.edges[:0]
 }
 
-func (n *Node) drop(e *Edge) {
+func (n *node) drop(e Edge) {
 	for i := 0; i < len(n.edges); {
 		if n.edges[i] == e {
 			n.edges = n.edges.delFromNode(i)
@@ -128,16 +135,57 @@ func (n *Node) drop(e *Edge) {
 	}
 }
 
-func (n *Node) String() string {
+func (n *node) setID(id int)   { n.id = id }
+func (n *node) setIndex(i int) { n.i = i }
+func (n *node) index() int     { return n.i }
+
+func (n *node) String() string {
 	return fmt.Sprintf("%d:%v", n.id, n.edges)
 }
 
-// Nodes is a collection of nodes used for internal representation of node lists in a graph.
-type Nodes []*Node
+// Nodes is a collection of nodes.
+type Nodes []Node
 
-func (n Nodes) delFromGraph(i int) Nodes {
-	n[i], n[len(n)-1] = n[len(n)-1], n[i]
-	n[i].index = i
-	n[len(n)-1].index = -1
-	return n[:len(n)-1]
+// BuildUndirected creates a new Undirected graph using nodes and edges specified by the
+// set of nodes in the receiver. If edges of nodes in the receiver connect to nodes that are not, these extra nodes
+// will be included in the resulting graph. If compact is set to true, edge IDs are chosen to minimize
+// space consumption, but breaking edge ID consistency between the new graph and the original.
+func (ns Nodes) BuildUndirected(compact bool) (*Undirected, error) {
+	seen := make(map[Edge]struct{})
+	g := NewUndirected()
+	for _, n := range ns {
+		g.AddID(n.ID())
+		for _, e := range n.Edges() {
+			if _, ok := seen[e]; ok {
+				continue
+			}
+			seen[e] = struct{}{}
+			u, v := e.Nodes()
+			uid, vid := u.ID(), v.ID()
+			if uid < 0 || vid < 0 {
+				return nil, NodeIDOutOfRange
+			}
+			g.AddID(uid)
+			g.AddID(vid)
+			var ne Edge
+			if compact {
+				ne = g.newEdge(g.nodes[uid], g.nodes[vid], e.Weight(), e.Flags())
+			} else {
+				ne = g.newEdgeKeepID(e.ID(), g.nodes[uid], g.nodes[vid], e.Weight(), e.Flags())
+			}
+			g.nodes[uid].add(ne)
+			if vid != uid {
+				g.nodes[vid].add(ne)
+			}
+		}
+	}
+
+	return g, nil
+}
+
+func (ns Nodes) delFromGraph(i int) Nodes {
+	ns[i], ns[len(ns)-1] = ns[len(ns)-1], ns[i]
+	ns[i].setIndex(i)
+	ns[len(ns)-1].setIndex(-1)
+	return ns[:len(ns)-1]
 }

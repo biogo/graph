@@ -25,7 +25,7 @@ import (
 
 // linked list approach
 
-func RandMinCutLL(g *Undirected) (c []*Edge, w float64) {
+func RandMinCutLL(g *Undirected) (c []Edge, w float64) {
 	ka := newKargerLL(g)
 	w = float64(g.Size())
 	var cw float64
@@ -86,7 +86,7 @@ func (ka *kargerLL) init() {
 	ka.sel.Init()
 }
 
-func (ka *kargerLL) randMinCut() (c []*Edge, w float64) {
+func (ka *kargerLL) randMinCut() (c []Edge, w float64) {
 	ka.init()
 	for k := ka.g.Order(); k > 2; {
 		id, err := ka.sel.Select()
@@ -131,6 +131,6 @@ func (ka *kargerLL) randMinCut() (c []*Edge, w float64) {
 	return
 }
 
-func (ka *kargerLL) loop(e *Edge) bool {
+func (ka *kargerLL) loop(e Edge) bool {
 	return ka.ind[e.Head().ID()].label == ka.ind[e.Tail().ID()].label
 }

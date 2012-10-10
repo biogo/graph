@@ -27,7 +27,7 @@ const sqrt2 = 1.4142135623730950488016887242096980785696718753769480
 
 var MaxProcs = runtime.GOMAXPROCS(0)
 
-func FastRandMinCut(g *Undirected, iter int) (c []*Edge, w float64) {
+func FastRandMinCut(g *Undirected, iter int) (c []Edge, w float64) {
 	ka := newKargerR(g)
 	ka.init()
 	w = math.Inf(1)
@@ -44,7 +44,7 @@ func FastRandMinCut(g *Undirected, iter int) (c []*Edge, w float64) {
 
 // parallelised outside the recursion tree
 
-func FastRandMinCutPar(g *Undirected, iter, thread int) (c []*Edge, w float64) {
+func FastRandMinCutPar(g *Undirected, iter, thread int) (c []Edge, w float64) {
 	if thread > MaxProcs {
 		thread = MaxProcs
 	}
@@ -54,7 +54,7 @@ func FastRandMinCutPar(g *Undirected, iter, thread int) (c []*Edge, w float64) {
 	iter, rem := iter/thread+1, iter%thread
 
 	type r struct {
-		c []*Edge
+		c []Edge
 		w float64
 	}
 	rs := make([]*r, thread)
@@ -74,7 +74,7 @@ func FastRandMinCutPar(g *Undirected, iter, thread int) (c []*Edge, w float64) {
 			ka.init()
 			var (
 				w = math.Inf(1)
-				c []*Edge
+				c []Edge
 			)
 			for i := 0; i < iter; i++ {
 				ka.fastRandMinCut()
@@ -105,7 +105,7 @@ type kargerR struct {
 	order int
 	ind   []super
 	sel   Selector
-	c     []*Edge
+	c     []Edge
 	w     float64
 }
 
@@ -246,7 +246,7 @@ func (ka *kargerR) randCompact(k int) {
 		ka.order--
 	}
 
-	ka.c, ka.w = []*Edge{}, 0
+	ka.c, ka.w = []Edge{}, 0
 	for _, e := range ka.g.Edges() {
 		if ka.loop(e) {
 			continue
@@ -256,13 +256,13 @@ func (ka *kargerR) randCompact(k int) {
 	}
 }
 
-func (ka *kargerR) loop(e *Edge) bool {
+func (ka *kargerR) loop(e Edge) bool {
 	return ka.ind[e.Head().ID()].label == ka.ind[e.Tail().ID()].label
 }
 
 // parallelised within the recursion tree
 
-func ParFastRandMinCut(g *Undirected, iter, threads int) (c []*Edge, w float64) {
+func ParFastRandMinCut(g *Undirected, iter, threads int) (c []Edge, w float64) {
 	k := newKargerRP(g)
 	k.split = threads
 	if k.split == 0 {
@@ -286,7 +286,7 @@ type kargerRP struct {
 	order int
 	ind   []super
 	sel   Selector
-	c     []*Edge
+	c     []Edge
 	w     float64
 	count int
 	split int
@@ -450,7 +450,7 @@ func (ka *kargerRP) randCompact(k int) {
 		ka.order--
 	}
 
-	ka.c, ka.w = []*Edge{}, 0
+	ka.c, ka.w = []Edge{}, 0
 	for _, e := range ka.g.Edges() {
 		if ka.loop(e) {
 			continue
@@ -460,6 +460,6 @@ func (ka *kargerRP) randCompact(k int) {
 	}
 }
 
-func (ka *kargerRP) loop(e *Edge) bool {
+func (ka *kargerRP) loop(e Edge) bool {
 	return ka.ind[e.Head().ID()].label == ka.ind[e.Tail().ID()].label
 }

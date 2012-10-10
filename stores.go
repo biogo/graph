@@ -28,10 +28,10 @@ var (
 
 type queue struct {
 	head int
-	data []*Node
+	data []Node
 }
 
-func (q *queue) Enqueue(n *Node) {
+func (q *queue) Enqueue(n Node) {
 	if len(q.data) == cap(q.data) && q.head > 0 {
 		l := q.Len()
 		copy(q.data, q.data[q.head:])
@@ -42,12 +42,12 @@ func (q *queue) Enqueue(n *Node) {
 	}
 }
 
-func (q *queue) Dequeue() (*Node, error) {
+func (q *queue) Dequeue() (Node, error) {
 	if q.Len() == 0 {
 		return nil, emptyQueue
 	}
 
-	var n *Node
+	var n Node
 	n, q.data[q.head] = q.data[q.head], nil
 	q.head++
 
@@ -59,7 +59,7 @@ func (q *queue) Dequeue() (*Node, error) {
 	return n, nil
 }
 
-func (q *queue) Peek(i int) (*Node, error) {
+func (q *queue) Peek(i int) (Node, error) {
 	if i < q.head || i >= len(q.data) {
 		return nil, queueIndexOutOfRange
 	}
@@ -74,23 +74,23 @@ func (q *queue) Clear() {
 func (q *queue) Len() int { return len(q.data) - q.head }
 
 type stack struct {
-	data []*Node
+	data []Node
 }
 
-func (s *stack) Push(n *Node) { s.data = append(s.data, n) }
+func (s *stack) Push(n Node) { s.data = append(s.data, n) }
 
-func (s *stack) Pop() (*Node, error) {
+func (s *stack) Pop() (Node, error) {
 	if len(s.data) == 0 {
 		return nil, emptyStack
 	}
 
-	var n *Node
+	var n Node
 	n, s.data, s.data[len(s.data)-1] = s.data[len(s.data)-1], s.data[:len(s.data)-1], nil
 
 	return n, nil
 }
 
-func (s *stack) Peek(i int) (*Node, error) {
+func (s *stack) Peek(i int) (Node, error) {
 	if i < 0 || i >= len(s.data) {
 		return nil, stackIndexOutOfRange
 	}

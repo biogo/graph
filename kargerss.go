@@ -21,7 +21,7 @@ import (
 
 // FIXME Use Index() instead of ID() on edges and nodes - this requires a change to node.go
 
-func RandMinCutSS(g *Undirected, iter int64, wt float64) (c []*Edge, w float64) {
+func RandMinCutSS(g *Undirected, iter int64, wt float64) (c []Edge, w float64) {
 	ka := newKargerSS(g)
 	w = math.Inf(1)
 	var cw float64
@@ -72,12 +72,12 @@ func (ka *kargerSS) init() {
 	ka.sel.Init()
 }
 
-func (ka *kargerSS) randCut() ([]*Edge, float64) {
+func (ka *kargerSS) randCut() ([]Edge, float64) {
 	ka.init()
 	return ka.randCompact()
 }
 
-func (ka *kargerSS) randCompact() (c []*Edge, w float64) {
+func (ka *kargerSS) randCompact() (c []Edge, w float64) {
 	ka.init()
 	for k := ka.g.Order(); k > 2; {
 		id, err := ka.sel.Select()
@@ -124,6 +124,6 @@ func (ka *kargerSS) randCompact() (c []*Edge, w float64) {
 	return
 }
 
-func (ka *kargerSS) loop(e *Edge) bool {
+func (ka *kargerSS) loop(e Edge) bool {
 	return ka.ind[e.Head().ID()].label == ka.ind[e.Tail().ID()].label
 }

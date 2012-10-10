@@ -22,7 +22,7 @@ import (
 
 // Tests
 var (
-	uv = []edge{
+	uv = []e{
 		{1, 4},
 		{4, 7},
 		{7, 1},
@@ -41,11 +41,11 @@ var (
 	partSizes  = []int{3, 5}
 )
 
-func undirected(c *check.C, edges []edge) (g *Undirected) {
+func undirected(c *check.C, edges []e) (g *Undirected) {
 	g = NewUndirected()
 	for _, e := range edges {
-		u, _ := g.Add(e.u)
-		v, _ := g.Add(e.v)
+		u, _ := g.AddID(e.u)
+		v, _ := g.AddID(e.v)
 		g.Connect(u, v, 1, 0)
 	}
 
@@ -110,7 +110,7 @@ func (s *S) TestUndirectedConnected(c *check.C) {
 
 func (s *S) TestUndirectedConnectedComponent(c *check.C) {
 	g := undirected(c, uv)
-	f := func(_ *Edge) bool { return true }
+	f := func(_ Edge) bool { return true }
 	c.Check(len(g.ConnectedComponents(f)), check.Equals, 1)
 	g.DeleteByID(deleteNode)
 	nodes, edges := make(map[int]int), make(map[int]int)
@@ -126,9 +126,9 @@ func (s *S) TestUndirectedConnectedComponent(c *check.C) {
 	for i, p := range cc {
 		c.Check(len(p), check.Equals, partSizes[i])
 		for _, n := range p {
-			c.Check(parts[n.id], check.Equals, i)
+			c.Check(parts[n.ID()], check.Equals, i)
 		}
-		g0, err := BuildUndirected(p, true)
+		g0, err := p.BuildUndirected(true)
 		if err != nil {
 			c.Fatal(err)
 		}
@@ -139,7 +139,7 @@ func (s *S) TestUndirectedConnectedComponent(c *check.C) {
 
 func (s *S) TestUndirectedBuild(c *check.C) {
 	g := undirected(c, uv)
-	g0, err := BuildUndirected(g.Nodes(), false)
+	g0, err := g.Nodes().BuildUndirected(false)
 	if err != nil {
 		c.Fatal(err)
 	}

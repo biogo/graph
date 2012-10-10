@@ -89,9 +89,9 @@ var (
 func createGraph(nodes []N) *Undirected {
 	g := NewUndirected()
 	for _, n := range nodes {
-		h, _ := g.Add(n.id)
+		h, _ := g.AddID(n.id)
 		for _, tid := range n.tails {
-			t, _ := g.Add(tid)
+			t, _ := g.AddID(tid)
 			if n.id < tid {
 				g.Connect(h, t, 1, 0)
 			}

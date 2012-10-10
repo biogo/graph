@@ -25,6 +25,6 @@ func Test(t *testing.T) { check.TestingT(t) }
 
 type S struct{}
 
-type edge struct{ u, v int }
+type e struct{ u, v int }
 
 var _ = check.Suite(&S{})

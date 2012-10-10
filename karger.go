@@ -25,7 +25,7 @@ import (
 
 // array approach
 
-func RandMinCut(g *Undirected) (c []*Edge, w float64) {
+func RandMinCut(g *Undirected) (c []Edge, w float64) {
 	ka := newKarger(g)
 	w = float64(g.Size())
 	var cw float64
@@ -72,7 +72,7 @@ func (ka *karger) init() {
 	ka.sel.Init()
 }
 
-func (ka *karger) randMinCut() (c []*Edge, w float64) {
+func (ka *karger) randMinCut() (c []Edge, w float64) {
 	ka.init()
 	for k := ka.g.Order(); k > 2; {
 		id, err := ka.sel.Select()
@@ -106,6 +106,6 @@ func (ka *karger) randMinCut() (c []*Edge, w float64) {
 	return
 }
 
-func (ka *karger) loop(e *Edge) bool {
+func (ka *karger) loop(e Edge) bool {
 	return ka.label[e.Head().ID()] == ka.label[e.Tail().ID()]
 }

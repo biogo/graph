@@ -23,7 +23,7 @@ var notFound = errors.New("graph: target not found") // TODO: Remove this. Just 
 
 // Visit is a function type that is used by a BreadthFirst or DepthFirst to allow side-effects
 // on visiting new nodes in a graph traversal.
-type Visit func(u, v *Node)
+type Visit func(u, v Node)
 
 // BreadthFirst is a type that can perform a breadth-first search on a graph.
 type BreadthFirst struct {
@@ -41,7 +41,7 @@ func NewBreadthFirst() *BreadthFirst {
 // the terminating node, t is returned. If vo is not nil, it is called with the start and end nodes of an
 // edge when the end node has not already been visited. If no node is found that satisfies nf, an error
 // is returned.
-func (b *BreadthFirst) Search(s *Node, ef EdgeFilter, nf NodeFilter, vo Visit) (*Node, error) {
+func (b *BreadthFirst) Search(s Node, ef EdgeFilter, nf NodeFilter, vo Visit) (Node, error) {
 	b.q.Enqueue(s)
 	b.visits = mark(s, b.visits)
 	for b.q.Len() > 0 {
@@ -67,12 +67,12 @@ func (b *BreadthFirst) Search(s *Node, ef EdgeFilter, nf NodeFilter, vo Visit) (
 }
 
 // Visited marks the node n as having been visited by the sercher.
-func (b *BreadthFirst) Visited(n *Node) bool {
-	id := n.id
+func (b *BreadthFirst) Visited(n Node) bool {
+	id := n.ID()
 	if id < 0 || id >= len(b.visits) {
 		return false
 	}
-	return b.visits[n.id]
+	return b.visits[id]
 }
 
 // Reset clears the search queue and visited list.
@@ -97,7 +97,7 @@ func NewDepthFirst() *DepthFirst {
 // the terminating node, t is returned. If vo is not nil, it is called with the start and end nodes of an
 // edge when the end node has not already been visited. If no node is found that satisfies nf, an error
 // is returned.
-func (d *DepthFirst) Search(s *Node, ef EdgeFilter, nf NodeFilter, vo Visit) (*Node, error) {
+func (d *DepthFirst) Search(s Node, ef EdgeFilter, nf NodeFilter, vo Visit) (Node, error) {
 	d.s.Push(s)
 	d.visits = mark(s, d.visits)
 	for d.s.Len() > 0 {
@@ -123,12 +123,12 @@ func (d *DepthFirst) Search(s *Node, ef EdgeFilter, nf NodeFilter, vo Visit) (*N
 }
 
 // Visited marks the node n as having been visited by the sercher.
-func (d *DepthFirst) Visited(n *Node) bool {
-	id := n.id
+func (d *DepthFirst) Visited(n Node) bool {
+	id := n.ID()
 	if id < 0 || id >= len(d.visits) {
 		return false
 	}
-	return d.visits[n.id]
+	return d.visits[id]
 }
 
 // Reset clears the search stack and visited list.
@@ -137,8 +137,8 @@ func (d *DepthFirst) Reset() {
 	d.visits = d.visits[:0]
 }
 
-func mark(n *Node, v []bool) []bool {
-	id := n.id
+func mark(n Node, v []bool) []bool {
+	id := n.ID()
 	if id == len(v) {
 		v = append(v, true)
 	} else if id > len(v) {

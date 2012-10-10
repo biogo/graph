@@ -43,51 +43,14 @@ func NewUndirected() *Undirected {
 	}
 }
 
-// BuildUndirected creates a new Undirected graph using nodes and edges specified by the
-// set of nodes in the slice ns. If edges of nodes in ns connect to nodes not in ns, these extra nodes
-// will be included in the resulting graph. If compact is set to true, edge IDs are chosen to minimize
-// space consumption, but breaking edge ID consistency between the new graph and the original.
-func BuildUndirected(ns []*Node, compact bool) (*Undirected, error) {
-	seen := make(map[*Edge]struct{})
-	g := NewUndirected()
-	for _, n := range ns {
-		g.Add(n.ID())
-		g.nodes[n.ID()].name = n.name
-		for _, e := range n.Edges() {
-			if _, ok := seen[e]; ok {
-				continue
-			}
-			seen[e] = struct{}{}
-			u, v := e.Nodes()
-			uid, vid := u.ID(), v.ID()
-			if uid < 0 || vid < 0 {
-				return nil, NodeIDOutOfRange
-			}
-			g.Add(uid)
-			g.nodes[uid].name = u.name
-			g.Add(vid)
-			g.nodes[vid].name = v.name
-			var ne *Edge
-			if compact {
-				ne = g.newEdge(g.nodes[uid], g.nodes[vid], e.Weight(), e.Flags())
-			} else {
-				ne = g.newEdgeKeepID(e.ID(), g.nodes[uid], g.nodes[vid], e.Weight(), e.Flags())
-			}
-			ne.name = e.name
-			g.nodes[uid].add(ne)
-			if vid != uid {
-				g.nodes[vid].add(ne)
-			}
-		}
-	}
-
-	return g, nil
-}
-
 // NextNodeID returns the next unused available node ID. Unused IDs may be available for nodes with
 // ID in [0, NextNodeID()) from deletion of nodes.
 func (g *Undirected) NextNodeID() int {
 	return len(g.nodes)
+}
+
+func (g *Undirected) NewNode() Node {
+	return &node{id: len(g.nodes)}
 }
 
 // NextEdgeID returns the next unused available edge ID.
@@ -106,36 +69,60 @@ func (g *Undirected) Size() int {
 }
 
 // Nodes returns the complete set of nodes in the graph.
-func (g *Undirected) Nodes() []*Node {
+func (g *Undirected) Nodes() Nodes {
 	return g.compNodes
 }
 
-// Node returns the node with ID i.
-func (g *Undirected) Node(i int) *Node {
-	if i >= len(g.nodes) {
+// Node returns the node with the specified ID.
+func (g *Undirected) Node(id int) Node {
+	if id >= len(g.nodes) {
 		return nil
 	}
-	return g.nodes[i]
+	return g.nodes[id]
 }
 
 // Edges returns the complete set of edges in the graph.
-func (g *Undirected) Edges() []*Edge {
+func (g *Undirected) Edges() []Edge {
 	return g.compEdges
 }
 
-// Edge returns the edge with ID i.
-func (g *Undirected) Edge(i int) *Edge {
-	if i >= len(g.edges) {
+// Edge returns the edge with the specified ID.
+func (g *Undirected) Edge(id int) Edge {
+	if id >= len(g.edges) {
 		return nil
 	}
-	return g.edges[i]
+	return g.edges[id]
 }
 
 // Node methods
 
-// Add adds a node with ID is to the graph and returns the node. If a node with that specified ID
-// already exists, it is returned and an error NodeExists is also returned.
-func (g *Undirected) Add(id int) (*Node, error) {
+// Add adds a node n to the graph. If a node with already exists in the graph with the same id
+// an error NodeExists is returned.
+func (g *Undirected) Add(n Node) error {
+	id := n.ID()
+	if ok, _ := g.HasNodeID(id); ok {
+		return NodeExists
+	}
+
+	if id == len(g.nodes) {
+		g.nodes = append(g.nodes, n)
+	} else if id > len(g.nodes) {
+		ns := make(Nodes, id+1)
+		copy(ns, g.nodes)
+		g.nodes = ns
+		g.nodes[id] = n
+	} else {
+		g.nodes[id] = n
+	}
+	n.setIndex(len(g.compNodes))
+	g.compNodes = append(g.compNodes, n)
+
+	return nil
+}
+
+// AddID adds a node with a specified ID. If a node with this ID already exists, 
+// it is returned with an error NodeExists.
+func (g *Undirected) AddID(id int) (Node, error) {
 	if ok, _ := g.HasNodeID(id); ok {
 		return g.Node(id), NodeExists
 	}
@@ -152,13 +139,13 @@ func (g *Undirected) Add(id int) (*Node, error) {
 	} else {
 		g.nodes[id] = n
 	}
-	n.index = len(g.compNodes)
+	n.setIndex(len(g.compNodes))
 	g.compNodes = append(g.compNodes, n)
 
 	return n, nil
 }
 
-// DeleteByID deletes the node with ID id from the graph. If the specified node does not exist
+// DeleteByID deletes the node with the specified from the graph. If the specified node does not exist
 // an error, NodeDoesNotExist is returned.
 func (g *Undirected) DeleteByID(id int) error {
 	ok, _ := g.HasNodeID(id)
@@ -172,35 +159,26 @@ func (g *Undirected) DeleteByID(id int) error {
 
 // Delete deletes the node n from the graph. If the specified node does not exist an error,
 // NodeDoesNotExist is returned.
-func (g *Undirected) Delete(n *Node) error {
-	ok, _ := g.Has(n)
-	if !ok {
-		return NodeDoesNotExist
-	}
-	g.deleteNode(n.ID())
-
-	return nil
+func (g *Undirected) Delete(n Node) error {
+	return g.DeleteByID(n.ID())
 }
 
 func (g *Undirected) deleteNode(id int) {
 	n := g.nodes[id]
 	g.nodes[n.ID()] = nil
-	f := func(_ *Edge) bool { return true }
+	f := func(_ Edge) bool { return true }
 	for _, h := range n.Hops(f) {
 		h.Edge.disconnect(h.Node)
-		g.compEdges = g.compEdges.delFromGraph(h.Edge.i)
+		g.compEdges = g.compEdges.delFromGraph(h.Edge.index())
 	}
-	g.compNodes = g.compNodes.delFromGraph(n.index)
-	(*n) = Node{}
+	g.compNodes = g.compNodes.delFromGraph(n.index())
+	n.setID(-1)
 }
 
 // Has returns a boolean indicating whether the node n exists in the graph. If the ID of n is no in
 // [0, NextNodeID()) an error, NodeIDOutOfRange is returned.
-func (g *Undirected) Has(n *Node) (bool, error) {
-	if id := n.ID(); id >= 0 && id < len(g.nodes) {
-		return g.nodes[id] == n, nil
-	}
-	return false, NodeIDOutOfRange
+func (g *Undirected) Has(n Node) (bool, error) {
+	return g.HasNodeID(n.ID())
 }
 
 // HasNodeID returns a boolean indicating whether a node with ID is exists in the graph. If ID is no in
@@ -215,7 +193,7 @@ func (g *Undirected) HasNodeID(id int) (bool, error) {
 // Neighbours returns a slice of nodes that are reachable from the node n via edges that satisfy
 // the criteria specified by the edge filter ef. If the node does not exist, an error NodeDoesNotExist
 // or NodeIDOutOfRange is returned.
-func (g *Undirected) Neighbors(n *Node, ef EdgeFilter) ([]*Node, error) {
+func (g *Undirected) Neighbors(n Node, ef EdgeFilter) ([]Node, error) {
 	ok, err := g.Has(n)
 	if !ok {
 		if err == nil {
@@ -229,7 +207,7 @@ func (g *Undirected) Neighbors(n *Node, ef EdgeFilter) ([]*Node, error) {
 // Merge merges the node src into the node dst, transfering all the edges of src to dst.
 // The node src is then deleted. If either src or dst do not exist in the graph,
 // an appropriate error is returned.
-func (g *Undirected) Merge(dst, src *Node) error {
+func (g *Undirected) Merge(dst, src Node) error {
 	var (
 		ok  bool
 		err error
@@ -260,7 +238,7 @@ func (g *Undirected) Merge(dst, src *Node) error {
 
 // newEdge makes a new edge joining u and v with weight w and edge flags f. The ID chosen for the
 // edge is NextEdgeID().
-func (g *Undirected) newEdge(u, v *Node, w float64, f EdgeFlags) *Edge {
+func (g *Undirected) newEdge(u, v Node, w float64, f EdgeFlags) Edge {
 	e := newEdge(len(g.edges), len(g.compEdges), u, v, w, f)
 	g.edges = append(g.edges, e)
 	g.compEdges = append(g.compEdges, e)
@@ -269,7 +247,7 @@ func (g *Undirected) newEdge(u, v *Node, w float64, f EdgeFlags) *Edge {
 }
 
 // newEdgeKeepID makes a new edge joining u and v with ID id, weight w and edge flags f.
-func (g *Undirected) newEdgeKeepID(id int, u, v *Node, w float64, f EdgeFlags) *Edge {
+func (g *Undirected) newEdgeKeepID(id int, u, v Node, w float64, f EdgeFlags) Edge {
 	if id < len(g.edges) && g.edges[id] != nil {
 		panic("graph: attempted to create a new edge with an existing ID")
 	}
@@ -285,16 +263,48 @@ func (g *Undirected) newEdgeKeepID(id int, u, v *Node, w float64, f EdgeFlags) *
 	} else {
 		g.edges[id] = e
 	}
-	e.i = len(g.compEdges)
+	e.setIndex(len(g.compEdges))
 	g.compEdges = append(g.compEdges, e)
 
 	return e
 }
 
+// ConnectWith join nodes u and v with the provided edge. An error is returned if
+// either of the nodes does not exist.
+func (g *Undirected) ConnectWith(u, v Node, with Edge) error {
+	var (
+		ok  bool
+		err error
+	)
+	ok, err = g.Has(u)
+	if !ok {
+		return err
+	}
+	ok, err = g.Has(v)
+	if !ok {
+		return err
+	}
+
+	e := with
+	e.setID(len(g.edges))
+	e.setIndex(len(g.compEdges))
+	e.join(u, v)
+
+	g.edges = append(g.edges, e)
+	g.compEdges = append(g.compEdges, e)
+
+	u.add(e)
+	if v != u {
+		v.add(e)
+	}
+
+	return nil
+}
+
 // Connect creates a new edge joining nodes u and v with weight w, and specifying edge flags f.
 // The new edge is returned on success. An error is returned if either of the nodes does not
 // exist.
-func (g *Undirected) Connect(u, v *Node, w float64, f EdgeFlags) (*Edge, error) {
+func (g *Undirected) Connect(u, v Node, w float64, f EdgeFlags) (Edge, error) {
 	var (
 		ok  bool
 		err error
@@ -345,7 +355,7 @@ func (g *Undirected) ConnectByID(uid, vid int, w float64, f EdgeFlags) (int, err
 
 // Connected returns a boolean indicating whether the nodes u and v share an edge. An error is returned
 // if either of the nodes does not exist.
-func (g *Undirected) Connected(u, v *Node) (bool, error) {
+func (g *Undirected) Connected(u, v Node) (bool, error) {
 	var (
 		ok  bool
 		err error
@@ -379,7 +389,7 @@ func (g *Undirected) Connected(u, v *Node) (bool, error) {
 
 // ConnectingEdges returns a slice of edges that are shared by nodes u and v. An error is returned
 // if either of the nodes does not exist.
-func (g *Undirected) ConnectingEdges(u, v *Node) ([]*Edge, error) {
+func (g *Undirected) ConnectingEdges(u, v Node) ([]Edge, error) {
 	var (
 		ok  bool
 		err error
@@ -393,7 +403,7 @@ func (g *Undirected) ConnectingEdges(u, v *Node) ([]*Edge, error) {
 		return nil, err
 	}
 
-	var c []*Edge
+	var c []Edge
 	uedges := u.Edges()
 	if u == v {
 		for _, e := range uedges {
@@ -421,8 +431,8 @@ func (g *Undirected) ConnectingEdges(u, v *Node) ([]*Edge, error) {
 
 // DeleteEdge deleted the edge e from the graph. An error is returned if the edge does not exist in
 // the graph.
-func (g *Undirected) DeleteEdge(e *Edge) error {
-	i := e.Index()
+func (g *Undirected) DeleteEdge(e Edge) error {
+	i := e.index()
 	if i < 0 || i > len(g.compEdges)-1 {
 		return EdgeDoesNotExist
 	}
@@ -431,7 +441,7 @@ func (g *Undirected) DeleteEdge(e *Edge) error {
 	e.disconnect(e.Tail())
 	g.compEdges = g.compEdges.delFromGraph(i)
 	g.edges[e.ID()] = nil
-	*e = Edge{}
+	e.setID(-1)
 
 	return nil
 }
@@ -441,11 +451,11 @@ func (g *Undirected) DeleteEdge(e *Edge) error {
 // ConnectedComponents returns a slice of slices of nodes. Each top level slice is the set of nodes
 // composing a connected component of the graph. Connection is determined by traversal of edges that
 // satisfy the edge filter ef.
-func (g *Undirected) ConnectedComponents(ef EdgeFilter) [][]*Node {
-	var cc [][]*Node
+func (g *Undirected) ConnectedComponents(ef EdgeFilter) []Nodes {
+	var cc []Nodes
 	df := NewDepthFirst()
-	c := []*Node{}
-	f := func(n *Node) bool {
+	c := []Node{}
+	f := func(n Node) bool {
 		c = append(c, n)
 		return false
 	}
@@ -454,7 +464,7 @@ func (g *Undirected) ConnectedComponents(ef EdgeFilter) [][]*Node {
 			continue
 		}
 		df.Search(s, ef, f, nil)
-		cc = append(cc, []*Node{})
+		cc = append(cc, []Node{})
 		cc[len(cc)-1] = append(cc[len(cc)-1], c...)
 		c = c[:0]
 	}
