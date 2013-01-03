@@ -16,7 +16,7 @@ var (
 	EdgeDoesNotExist = errors.New("graph: edge does not exist")
 )
 
-// An Unidirected is a container for an undirected graph representation.
+// An Undirected is a container for an undirected graph representation.
 type Undirected struct {
 	nodes, compNodes Nodes
 	edges, compEdges Edges
