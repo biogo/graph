@@ -78,7 +78,7 @@ func (n *node) Neighbors(ef EdgeFilter) []Node {
 	var nodes []Node
 	for _, e := range n.edges {
 		if ef(e) {
-			if a := e.Tail(); a == n {
+			if a := e.Tail(); a.ID() == n.ID() {
 				nodes = append(nodes, e.Head())
 			} else {
 				nodes = append(nodes, a)
@@ -94,7 +94,7 @@ func (n *node) Hops(ef EdgeFilter) []*Hop {
 	var h []*Hop
 	for _, e := range n.edges {
 		if ef(e) {
-			if a := e.Tail(); a == n {
+			if a := e.Tail(); a.ID() == n.ID() {
 				h = append(h, &Hop{e, e.Head()})
 			} else {
 				h = append(h, &Hop{e, a})
