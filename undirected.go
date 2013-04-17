@@ -109,7 +109,7 @@ func (g *Undirected) Add(n Node) error {
 	return nil
 }
 
-// AddID adds a node with a specified ID. If a node with this ID already exists, 
+// AddID adds a node with a specified ID. If a node with this ID already exists,
 // it is returned with an error NodeExists.
 func (g *Undirected) AddID(id int) (Node, error) {
 	if ok, _ := g.HasNodeID(id); ok {

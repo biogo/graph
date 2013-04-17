@@ -111,7 +111,7 @@ func (d *DepthFirst) Search(s Node, ef EdgeFilter, nf NodeFilter, vo Visit) (Nod
 	return nil, notFound
 }
 
-// Visited marks the node n as having been visited by the sercher.
+// Visited marks the node n as having been visited by the searcher.
 func (d *DepthFirst) Visited(n Node) bool {
 	id := n.ID()
 	if id < 0 || id >= len(d.visits) {
