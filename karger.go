@@ -35,6 +35,9 @@ type karger struct {
 	sel   Selector
 	c     []Edge
 	w     float64
+
+	count int
+	split int
 }
 
 type super struct {
@@ -72,6 +75,7 @@ func (ka *karger) clone() (c *karger) {
 		ind:   make([]super, ka.g.NextNodeID()),
 		sel:   make(Selector, ka.g.Size()),
 		order: ka.order,
+		count: ka.count,
 	}
 
 	copy(c.sel, ka.sel)
@@ -195,8 +199,8 @@ func (ka *karger) loop(e Edge) bool {
 
 // parallelised within the recursion tree
 
-func ParFastRandMinCut(g *Undirected, iter, threads int) (c []Edge, w float64) {
-	k := newKargerP(g)
+func FastRandMinCutPar(g *Undirected, iter, threads int) (c []Edge, w float64) {
+	k := newKarger(g)
 	k.split = threads
 	if k.split == 0 {
 		k.split = -1
@@ -204,7 +208,7 @@ func ParFastRandMinCut(g *Undirected, iter, threads int) (c []Edge, w float64) {
 	k.init()
 	w = math.Inf(1)
 	for i := 0; i < iter; i++ {
-		k.fastRandMinCut()
+		k.fastRandMinCutPar()
 		if k.w < w {
 			w = k.w
 			c = k.c
@@ -214,28 +218,7 @@ func ParFastRandMinCut(g *Undirected, iter, threads int) (c []Edge, w float64) {
 	return
 }
 
-type kargerP struct {
-	karger
-	count int
-	split int
-}
-
-func newKargerP(g *Undirected) *kargerP {
-	return &kargerP{karger: karger{
-		g:   g,
-		ind: make([]super, g.NextNodeID()),
-		sel: make(Selector, g.Size()),
-	}}
-}
-
-func (ka *kargerP) clone() (c *kargerP) {
-	c = &kargerP{karger: *ka.karger.clone()}
-	c.count = ka.count
-
-	return
-}
-
-func (ka *kargerP) fastRandMinCut() {
+func (ka *karger) fastRandMinCutPar() {
 	if ka.order <= 6 {
 		ka.randCompact(2)
 		return
@@ -249,7 +232,7 @@ func (ka *kargerP) fastRandMinCut() {
 	}
 	ka.count++
 
-	sub := []*kargerP{ka, ka.clone()}
+	sub := []*karger{ka, ka.clone()}
 	for i := range sub {
 		if wg != nil {
 			wg.Add(1)
