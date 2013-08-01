@@ -17,7 +17,7 @@ const sqrt2 = 1.4142135623730950488016887242096980785696718753769480
 var MaxProcs = runtime.GOMAXPROCS(0)
 
 func FastRandMinCut(g *Undirected, iter int) (c []Edge, w float64) {
-	ka := newKargerR(g)
+	ka := newKarger(g)
 	ka.init()
 	w = math.Inf(1)
 	for i := 0; i < iter; i++ {
@@ -31,65 +31,7 @@ func FastRandMinCut(g *Undirected, iter int) (c []Edge, w float64) {
 	return
 }
 
-// parallelised outside the recursion tree
-
-func FastRandMinCutPar(g *Undirected, iter, thread int) (c []Edge, w float64) {
-	if thread > MaxProcs {
-		thread = MaxProcs
-	}
-	if thread > iter {
-		thread = iter
-	}
-	iter, rem := iter/thread+1, iter%thread
-
-	type r struct {
-		c []Edge
-		w float64
-	}
-	rs := make([]*r, thread)
-
-	wg := &sync.WaitGroup{}
-	for j := 0; j < thread; j++ {
-		if rem == 0 {
-			iter--
-		}
-		if rem >= 0 {
-			rem--
-		}
-		wg.Add(1)
-		go func(j, iter int) {
-			defer wg.Done()
-			ka := newKargerR(g)
-			ka.init()
-			var (
-				w = math.Inf(1)
-				c []Edge
-			)
-			for i := 0; i < iter; i++ {
-				ka.fastRandMinCut()
-				if ka.w < w {
-					w = ka.w
-					c = ka.c
-				}
-			}
-
-			rs[j] = &r{c, w}
-		}(j, iter)
-	}
-
-	w = math.Inf(1)
-	wg.Wait()
-	for _, subr := range rs {
-		if subr.w < w {
-			w = subr.w
-			c = subr.c
-		}
-	}
-
-	return
-}
-
-type kargerR struct {
+type karger struct {
 	g     *Undirected
 	order int
 	ind   []super
@@ -103,15 +45,15 @@ type super struct {
 	nodes []int
 }
 
-func newKargerR(g *Undirected) *kargerR {
-	return &kargerR{
+func newKarger(g *Undirected) *karger {
+	return &karger{
 		g:   g,
 		ind: make([]super, g.NextNodeID()),
 		sel: make(Selector, g.Size()),
 	}
 }
 
-func (ka *kargerR) init() {
+func (ka *karger) init() {
 	ka.order = ka.g.Order()
 	for i := range ka.ind {
 		ka.ind[i].label = -1
@@ -127,8 +69,8 @@ func (ka *kargerR) init() {
 	ka.sel.Init()
 }
 
-func (ka *kargerR) clone() (c *kargerR) {
-	c = &kargerR{
+func (ka *karger) clone() (c *karger) {
+	c = &karger{
 		g:     ka.g,
 		ind:   make([]super, ka.g.NextNodeID()),
 		sel:   make(Selector, ka.g.Size()),
@@ -148,7 +90,7 @@ func (ka *kargerR) clone() (c *kargerR) {
 	return
 }
 
-func (ka *kargerR) fastRandMinCut() {
+func (ka *karger) fastRandMinCut() {
 	if ka.order <= 6 {
 		ka.randCompact(2)
 		return
@@ -156,7 +98,7 @@ func (ka *kargerR) fastRandMinCut() {
 
 	t := int(math.Ceil(float64(ka.order)/sqrt2 + 1))
 
-	sub := []*kargerR{ka, ka.clone()}
+	sub := []*karger{ka, ka.clone()}
 	for i := range sub {
 		sub[i].randContract(t)
 		sub[i].fastRandMinCut()
@@ -169,7 +111,7 @@ func (ka *kargerR) fastRandMinCut() {
 	*ka = *sub[1]
 }
 
-func (ka *kargerR) randContract(k int) {
+func (ka *karger) randContract(k int) {
 	for ka.order > k {
 		id, err := ka.sel.Select()
 		if err != nil {
@@ -205,7 +147,7 @@ func (ka *kargerR) randContract(k int) {
 	}
 }
 
-func (ka *kargerR) randCompact(k int) {
+func (ka *karger) randCompact(k int) {
 	for ka.order > k {
 		id, err := ka.sel.Select()
 		if err != nil {
@@ -250,14 +192,14 @@ func (ka *kargerR) randCompact(k int) {
 	}
 }
 
-func (ka *kargerR) loop(e Edge) bool {
+func (ka *karger) loop(e Edge) bool {
 	return ka.ind[e.Head().ID()].label == ka.ind[e.Tail().ID()].label
 }
 
 // parallelised within the recursion tree
 
 func ParFastRandMinCut(g *Undirected, iter, threads int) (c []Edge, w float64) {
-	k := newKargerRP(g)
+	k := newKargerP(g)
 	k.split = threads
 	if k.split == 0 {
 		k.split = -1
@@ -275,7 +217,7 @@ func ParFastRandMinCut(g *Undirected, iter, threads int) (c []Edge, w float64) {
 	return
 }
 
-type kargerRP struct {
+type kargerP struct {
 	g     *Undirected
 	order int
 	ind   []super
@@ -286,15 +228,15 @@ type kargerRP struct {
 	split int
 }
 
-func newKargerRP(g *Undirected) *kargerRP {
-	return &kargerRP{
+func newKargerP(g *Undirected) *kargerP {
+	return &kargerP{
 		g:   g,
 		ind: make([]super, g.NextNodeID()),
 		sel: make(Selector, g.Size()),
 	}
 }
 
-func (ka *kargerRP) init() {
+func (ka *kargerP) init() {
 	ka.order = ka.g.Order()
 	for i := range ka.ind {
 		ka.ind[i].label = -1
@@ -310,8 +252,8 @@ func (ka *kargerRP) init() {
 	ka.sel.Init()
 }
 
-func (ka *kargerRP) clone() (c *kargerRP) {
-	c = &kargerRP{
+func (ka *kargerP) clone() (c *kargerP) {
+	c = &kargerP{
 		g:     ka.g,
 		ind:   make([]super, ka.g.NextNodeID()),
 		sel:   make(Selector, ka.g.Size()),
@@ -332,7 +274,7 @@ func (ka *kargerRP) clone() (c *kargerRP) {
 	return
 }
 
-func (ka *kargerRP) fastRandMinCut() {
+func (ka *kargerP) fastRandMinCut() {
 	if ka.order <= 6 {
 		ka.randCompact(2)
 		return
@@ -346,7 +288,7 @@ func (ka *kargerRP) fastRandMinCut() {
 	}
 	ka.count++
 
-	sub := []*kargerRP{ka, ka.clone()}
+	sub := []*kargerP{ka, ka.clone()}
 	for i := range sub {
 		if wg != nil {
 			wg.Add(1)
@@ -373,7 +315,7 @@ func (ka *kargerRP) fastRandMinCut() {
 	*ka = *sub[1]
 }
 
-func (ka *kargerRP) randContract(k int) {
+func (ka *kargerP) randContract(k int) {
 	for ka.order > k {
 		id, err := ka.sel.Select()
 		if err != nil {
@@ -409,7 +351,7 @@ func (ka *kargerRP) randContract(k int) {
 	}
 }
 
-func (ka *kargerRP) randCompact(k int) {
+func (ka *kargerP) randCompact(k int) {
 	for ka.order > k {
 		id, err := ka.sel.Select()
 		if err != nil {
@@ -454,6 +396,6 @@ func (ka *kargerRP) randCompact(k int) {
 	}
 }
 
-func (ka *kargerRP) loop(e Edge) bool {
+func (ka *kargerP) loop(e Edge) bool {
 	return ka.ind[e.Head().ID()].label == ka.ind[e.Tail().ID()].label
 }

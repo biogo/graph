@@ -100,15 +100,6 @@ func (s *S) TestKargerFastMinCut(c *check.C) {
 		c.Check(mc, check.Equals, cutExpects[j])
 	}
 }
-func (s *S) TestKargerFastMinCutPar(c *check.C) {
-	rand.Seed(0)
-	for j, g := range testG {
-		G := createGraph(g)
-		lo := int(math.Log(float64(G.Order())))
-		_, mc := FastRandMinCutPar(G, lo*lo, runtime.GOMAXPROCS(0))
-		c.Check(mc, check.Equals, cutExpects[j])
-	}
-}
 func (s *S) TestKargerParFastMinCut(c *check.C) {
 	rand.Seed(0)
 	for j, g := range testG {
@@ -124,13 +115,6 @@ func BenchmarkFastKarger(b *testing.B) {
 	lo := int(math.Log(float64(G.Order())))
 	for j := 0; j < b.N; j++ {
 		FastRandMinCut(G, lo*lo)
-	}
-}
-func BenchmarkFastKargerPar(b *testing.B) {
-	G := createGraph(testG[0])
-	lo := int(math.Log(float64(G.Order())))
-	for j := 0; j < b.N; j++ {
-		FastRandMinCutPar(G, lo*lo, runtime.GOMAXPROCS(0))
 	}
 }
 func BenchmarkParFastKarger(b *testing.B) {
