@@ -6,15 +6,12 @@ package graph
 
 import (
 	"math"
-	"runtime"
 	"sync"
 )
 
 // FIXME Use Index() instead of ID() on edges and nodes - this requires a change to node.go
 
 const sqrt2 = 1.4142135623730950488016887242096980785696718753769480
-
-var MaxProcs = runtime.GOMAXPROCS(0)
 
 func FastRandMinCut(g *Undirected, iter int) (c []Edge, w float64) {
 	ka := newKarger(g)
