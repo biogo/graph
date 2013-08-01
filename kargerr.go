@@ -98,6 +98,11 @@ type kargerR struct {
 	w     float64
 }
 
+type super struct {
+	label int
+	nodes []int
+}
+
 func newKargerR(g *Undirected) *kargerR {
 	return &kargerR{
 		g:   g,

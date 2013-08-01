@@ -91,36 +91,6 @@ func createGraph(nodes []N) *Undirected {
 }
 
 // Tests
-func (s *S) TestKargerOrig(c *check.C) {
-	rand.Seed(0)
-	for j, g := range testG {
-		k := newKarger(createGraph(g))
-		mc := float64(k.g.Size())
-		for i := 0; i < k.g.Order()*k.g.Order()*int(math.Log(float64(k.g.Order()))+1); i++ {
-			ce, w := k.randMinCut()
-			c.Check(len(ce), check.Equals, int(w))
-			if w < mc {
-				mc = w
-			}
-		}
-		c.Check(mc, check.Equals, cutExpects[j])
-	}
-}
-func (s *S) TestKargerSS(c *check.C) {
-	rand.Seed(0)
-	for j, g := range testG {
-		k := newKargerSS(createGraph(g))
-		mc := float64(k.g.Size())
-		for i := 0; i < k.g.Order()*k.g.Order()*int(math.Log(float64(k.g.Order()))+1); i++ {
-			ce, w := k.randCut()
-			c.Check(len(ce), check.Equals, int(w))
-			if w < mc {
-				mc = w
-			}
-		}
-		c.Check(mc, check.Equals, cutExpects[j])
-	}
-}
 func (s *S) TestKargerFastMinCut(c *check.C) {
 	rand.Seed(0)
 	for j, g := range testG {
@@ -139,21 +109,6 @@ func (s *S) TestKargerFastMinCutPar(c *check.C) {
 		c.Check(mc, check.Equals, cutExpects[j])
 	}
 }
-func (s *S) TestKargerLL(c *check.C) {
-	rand.Seed(0)
-	for j, g := range testG {
-		k := newKargerLL(createGraph(g))
-		mc := float64(k.g.Size())
-		for i := 0; i < k.g.Order()*k.g.Order()*int(math.Log(float64(k.g.Order()))+1); i++ {
-			ce, w := k.randMinCut()
-			c.Check(len(ce), check.Equals, int(w))
-			if w < mc {
-				mc = w
-			}
-		}
-		c.Check(mc, check.Equals, cutExpects[j])
-	}
-}
 func (s *S) TestKargerParFastMinCut(c *check.C) {
 	rand.Seed(0)
 	for j, g := range testG {
@@ -164,42 +119,6 @@ func (s *S) TestKargerParFastMinCut(c *check.C) {
 	}
 }
 
-func BenchmarkKargerOrig(b *testing.B) {
-	for j := 0; j < b.N; j++ {
-		k := newKarger(createGraph(testG[0]))
-		mc := float64(k.g.Size())
-		for i := 0; i < k.g.Order()*k.g.Order()*int(math.Log(float64(k.g.Order()))+1); i++ {
-			_, w := k.randMinCut()
-			if w < mc {
-				mc = w
-			}
-		}
-	}
-}
-func BenchmarkKargerSS(b *testing.B) {
-	for j := 0; j < b.N; j++ {
-		k := newKargerSS(createGraph(testG[0]))
-		mc := float64(k.g.Size())
-		for i := 0; i < k.g.Order()*k.g.Order()*int(math.Log(float64(k.g.Order()))+1); i++ {
-			_, w := k.randCut()
-			if w < mc {
-				mc = w
-			}
-		}
-	}
-}
-func BenchmarkKargerLL(b *testing.B) {
-	for j := 0; j < b.N; j++ {
-		k := newKargerLL(createGraph(testG[0]))
-		mc := float64(k.g.Size())
-		for i := 0; i < k.g.Order()*k.g.Order()*int(math.Log(float64(k.g.Order()))+1); i++ {
-			_, w := k.randMinCut()
-			if w < mc {
-				mc = w
-			}
-		}
-	}
-}
 func BenchmarkFastKarger(b *testing.B) {
 	G := createGraph(testG[0])
 	lo := int(math.Log(float64(G.Order())))
