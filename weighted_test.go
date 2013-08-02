@@ -5,10 +5,13 @@
 package graph
 
 import (
+	"flag"
 	check "launchpad.net/gocheck"
 	"math/rand"
 	"time"
 )
+
+var prob = flag.Bool("prob", false, "enables probabilistic testing of the random selector")
 
 // Tests
 
@@ -106,6 +109,9 @@ func (s *S) TestWeightedUnseeded(c *check.C) {
 }
 
 func (s *S) TestWeightedTimeSeeded(c *check.C) {
+	if !*prob {
+		c.Skip("probabilistic testing not requested")
+	}
 	c.Log("Note: This test is stochastic and is expected to fail with probability ≈ 0.05.")
 	rand.Seed(time.Now().Unix())
 	f := make([]float64, len(sel))
