@@ -42,11 +42,9 @@ func (ka *karger) fastRandMinCut() {
 		ks.fastRandMinCut()
 	}
 
-	if sub[0].w < sub[1].w {
-		*ka = *sub[0]
-		return
+	if sub[1].w < sub[0].w {
+		*ka = *sub[1]
 	}
-	*ka = *sub[1]
 }
 
 // parallelised within the recursion tree
@@ -103,11 +101,9 @@ func (ka *karger) fastRandMinCutPar() {
 		wg.Wait()
 	}
 
-	if sub[0].w < sub[1].w {
-		*ka = *sub[0]
-		return
+	if sub[1].w < sub[0].w {
+		*ka = *sub[1]
 	}
-	*ka = *sub[1]
 }
 
 type karger struct {
