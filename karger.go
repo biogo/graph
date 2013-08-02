@@ -28,6 +28,88 @@ func FastRandMinCut(g *Undirected, iter int) (c []Edge, w float64) {
 	return c, w
 }
 
+func (ka *karger) fastRandMinCut() {
+	if ka.order <= 6 {
+		ka.randCompact(2)
+		return
+	}
+
+	t := int(math.Ceil(float64(ka.order)/sqrt2 + 1))
+
+	sub := []*karger{ka, ka.clone()}
+	for _, ks := range sub {
+		ks.randContract(t)
+		ks.fastRandMinCut()
+	}
+
+	if sub[0].w < sub[1].w {
+		*ka = *sub[0]
+		return
+	}
+	*ka = *sub[1]
+}
+
+// parallelised within the recursion tree
+
+func FastRandMinCutPar(g *Undirected, iter, threads int) (c []Edge, w float64) {
+	k := newKarger(g)
+	k.split = threads
+	if k.split == 0 {
+		k.split = -1
+	}
+	k.init()
+	w = math.Inf(1)
+	for i := 0; i < iter; i++ {
+		k.fastRandMinCutPar()
+		if k.w < w {
+			w = k.w
+			c = k.c
+		}
+	}
+
+	return c, w
+}
+
+func (ka *karger) fastRandMinCutPar() {
+	if ka.order <= 6 {
+		ka.randCompact(2)
+		return
+	}
+
+	t := int(math.Ceil(float64(ka.order)/sqrt2 + 1))
+
+	var wg *sync.WaitGroup
+	if ka.count < ka.split {
+		wg = &sync.WaitGroup{}
+	}
+	ka.count++
+
+	sub := []*karger{ka, ka.clone()}
+	for _, ks := range sub {
+		if wg != nil {
+			wg.Add(1)
+			go func(ks *karger) {
+				defer wg.Done()
+				ks.randContract(t)
+				ks.fastRandMinCutPar()
+			}(ks)
+		} else {
+			ks.randContract(t)
+			ks.fastRandMinCutPar()
+		}
+	}
+
+	if wg != nil {
+		wg.Wait()
+	}
+
+	if sub[0].w < sub[1].w {
+		*ka = *sub[0]
+		return
+	}
+	*ka = *sub[1]
+}
+
 type karger struct {
 	g     *Undirected
 	order int
@@ -91,27 +173,6 @@ func (ka *karger) clone() *karger {
 	return &c
 }
 
-func (ka *karger) fastRandMinCut() {
-	if ka.order <= 6 {
-		ka.randCompact(2)
-		return
-	}
-
-	t := int(math.Ceil(float64(ka.order)/sqrt2 + 1))
-
-	sub := []*karger{ka, ka.clone()}
-	for _, ks := range sub {
-		ks.randContract(t)
-		ks.fastRandMinCut()
-	}
-
-	if sub[0].w < sub[1].w {
-		*ka = *sub[0]
-		return
-	}
-	*ka = *sub[1]
-}
-
 func (ka *karger) randContract(k int) {
 	for ka.order > k {
 		id, err := ka.sel.Select()
@@ -162,65 +223,4 @@ func (ka *karger) randCompact(k int) {
 
 func (ka *karger) loop(e Edge) bool {
 	return ka.ind[e.Head().ID()].label == ka.ind[e.Tail().ID()].label
-}
-
-// parallelised within the recursion tree
-
-func FastRandMinCutPar(g *Undirected, iter, threads int) (c []Edge, w float64) {
-	k := newKarger(g)
-	k.split = threads
-	if k.split == 0 {
-		k.split = -1
-	}
-	k.init()
-	w = math.Inf(1)
-	for i := 0; i < iter; i++ {
-		k.fastRandMinCutPar()
-		if k.w < w {
-			w = k.w
-			c = k.c
-		}
-	}
-
-	return c, w
-}
-
-func (ka *karger) fastRandMinCutPar() {
-	if ka.order <= 6 {
-		ka.randCompact(2)
-		return
-	}
-
-	t := int(math.Ceil(float64(ka.order)/sqrt2 + 1))
-
-	var wg *sync.WaitGroup
-	if ka.count < ka.split {
-		wg = &sync.WaitGroup{}
-	}
-	ka.count++
-
-	sub := []*karger{ka, ka.clone()}
-	for _, ks := range sub {
-		if wg != nil {
-			wg.Add(1)
-			go func(ks *karger) {
-				defer wg.Done()
-				ks.randContract(t)
-				ks.fastRandMinCutPar()
-			}(ks)
-		} else {
-			ks.randContract(t)
-			ks.fastRandMinCutPar()
-		}
-	}
-
-	if wg != nil {
-		wg.Wait()
-	}
-
-	if sub[0].w < sub[1].w {
-		*ka = *sub[0]
-		return
-	}
-	*ka = *sub[1]
 }
