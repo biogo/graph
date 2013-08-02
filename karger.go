@@ -149,40 +149,7 @@ func (ka *karger) randContract(k int) {
 }
 
 func (ka *karger) randCompact(k int) {
-	for ka.order > k {
-		id, err := ka.sel.Select()
-		if err != nil {
-			break
-		}
-
-		e := ka.g.Edge(id)
-		if ka.loop(e) {
-			continue
-		}
-
-		hid, tid := e.Head().ID(), e.Tail().ID()
-		hl, tl := ka.ind[hid].label, ka.ind[tid].label
-		if len(ka.ind[hl].nodes) < len(ka.ind[tl].nodes) {
-			hid, tid = tid, hid
-			hl, tl = tl, hl
-		}
-
-		if ka.ind[hl].nodes == nil {
-			ka.ind[hl].nodes = []int{hid}
-		}
-		if ka.ind[tl].nodes == nil {
-			ka.ind[hl].nodes = append(ka.ind[hl].nodes, tid)
-		} else {
-			ka.ind[hl].nodes = append(ka.ind[hl].nodes, ka.ind[tl].nodes...)
-			ka.ind[tl].nodes = nil
-		}
-		for _, i := range ka.ind[hl].nodes {
-			ka.ind[i].label = ka.ind[hid].label
-		}
-
-		ka.order--
-	}
-
+	ka.randContract(k)
 	ka.c, ka.w = []Edge{}, 0
 	for _, e := range ka.g.Edges() {
 		if ka.loop(e) {
