@@ -15,7 +15,6 @@ const sqrt2 = 1.4142135623730950488016887242096980785696718753769480
 
 func FastRandMinCut(g *Undirected, iter int) (c []Edge, w float64) {
 	ka := newKarger(g)
-	ka.init()
 	w = math.Inf(1)
 	for i := 0; i < iter; i++ {
 		ka.fastRandMinCut()
@@ -55,7 +54,6 @@ func FastRandMinCutPar(g *Undirected, iter, threads int) (c []Edge, w float64) {
 	if k.split == 0 {
 		k.split = -1
 	}
-	k.init()
 	w = math.Inf(1)
 	for i := 0; i < iter; i++ {
 		k.fastRandMinCutPar()
@@ -124,15 +122,13 @@ type super struct {
 }
 
 func newKarger(g *Undirected) *karger {
-	return &karger{
-		g:   g,
-		ind: make([]super, g.NextNodeID()),
-		sel: make(Selector, g.Size()),
+	ka := karger{
+		g:     g,
+		order: g.Order(),
+		ind:   make([]super, g.NextNodeID()),
+		sel:   make(Selector, g.Size()),
 	}
-}
 
-func (ka *karger) init() {
-	ka.order = ka.g.Order()
 	for i := range ka.ind {
 		ka.ind[i].label = -1
 		ka.ind[i].nodes = nil
@@ -141,10 +137,13 @@ func (ka *karger) init() {
 		id := n.ID()
 		ka.ind[id].label = id
 	}
+
 	for i, e := range ka.g.Edges() {
 		ka.sel[i] = WeightedItem{Index: e.ID(), Weight: e.Weight()}
 	}
 	ka.sel.Init()
+
+	return &ka
 }
 
 func (ka *karger) clone() *karger {
