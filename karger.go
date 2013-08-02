@@ -239,11 +239,11 @@ func (ka *karger) fastRandMinCutPar() {
 			go func(i int) {
 				defer wg.Done()
 				sub[i].randContract(t)
-				sub[i].fastRandMinCut()
+				sub[i].fastRandMinCutPar()
 			}(i)
 		} else {
 			sub[i].randContract(t)
-			sub[i].fastRandMinCut()
+			sub[i].fastRandMinCutPar()
 		}
 	}
 
