@@ -25,7 +25,7 @@ func FastRandMinCut(g *Undirected, iter int) (c []Edge, w float64) {
 		}
 	}
 
-	return
+	return c, w
 }
 
 type karger struct {
@@ -69,8 +69,8 @@ func (ka *karger) init() {
 	ka.sel.Init()
 }
 
-func (ka *karger) clone() (c *karger) {
-	c = &karger{
+func (ka *karger) clone() *karger {
+	c := karger{
 		g:     ka.g,
 		ind:   make([]super, ka.g.NextNodeID()),
 		sel:   make(Selector, ka.g.Size()),
@@ -88,7 +88,7 @@ func (ka *karger) clone() (c *karger) {
 		}
 	}
 
-	return
+	return &c
 }
 
 func (ka *karger) fastRandMinCut() {
@@ -215,7 +215,7 @@ func FastRandMinCutPar(g *Undirected, iter, threads int) (c []Edge, w float64) {
 		}
 	}
 
-	return
+	return c, w
 }
 
 func (ka *karger) fastRandMinCutPar() {
