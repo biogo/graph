@@ -100,9 +100,9 @@ func (ka *karger) fastRandMinCut() {
 	t := int(math.Ceil(float64(ka.order)/sqrt2 + 1))
 
 	sub := []*karger{ka, ka.clone()}
-	for i := range sub {
-		sub[i].randContract(t)
-		sub[i].fastRandMinCut()
+	for _, ks := range sub {
+		ks.randContract(t)
+		ks.fastRandMinCut()
 	}
 
 	if sub[0].w < sub[1].w {
@@ -200,17 +200,17 @@ func (ka *karger) fastRandMinCutPar() {
 	ka.count++
 
 	sub := []*karger{ka, ka.clone()}
-	for i := range sub {
+	for _, ks := range sub {
 		if wg != nil {
 			wg.Add(1)
-			go func(i int) {
+			go func(ks *karger) {
 				defer wg.Done()
-				sub[i].randContract(t)
-				sub[i].fastRandMinCutPar()
-			}(i)
+				ks.randContract(t)
+				ks.fastRandMinCutPar()
+			}(ks)
 		} else {
-			sub[i].randContract(t)
-			sub[i].fastRandMinCutPar()
+			ks.randContract(t)
+			ks.fastRandMinCutPar()
 		}
 	}
 
