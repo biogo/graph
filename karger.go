@@ -9,15 +9,18 @@ import (
 	"sync"
 )
 
+// Worked from http://www.cs.tau.ac.il/~zwick/grad-algo-08/gmc.pdf, but the wiki page
+// http://en.wikipedia.org/wiki/Karger%27s_algorithm#Karger.E2.80.93Stein_algorithm is very good.
+
 // FIXME Use Index() instead of ID() on edges and nodes - this requires a change to node.go
 
 const sqrt2 = 1.4142135623730950488016887242096980785696718753769480
 
-func FastRandMinCut(g *Undirected, iter int) (c []Edge, w float64) {
+func RandMinCut(g *Undirected, iter int) (c []Edge, w float64) {
 	ka := newKarger(g)
 	w = math.Inf(1)
 	for i := 0; i < iter; i++ {
-		ka.fastRandMinCut()
+		ka.fastMinCut()
 		if ka.w < w {
 			w = ka.w
 			c = ka.c
@@ -27,9 +30,9 @@ func FastRandMinCut(g *Undirected, iter int) (c []Edge, w float64) {
 	return c, w
 }
 
-func (ka *karger) fastRandMinCut() {
+func (ka *karger) fastMinCut() {
 	if ka.order <= 6 {
-		ka.randCompact(2)
+		ka.compact(2)
 		return
 	}
 
@@ -37,8 +40,8 @@ func (ka *karger) fastRandMinCut() {
 
 	sub := []*karger{ka, ka.clone()}
 	for _, ks := range sub {
-		ks.randContract(t)
-		ks.fastRandMinCut()
+		ks.contract(t)
+		ks.fastMinCut()
 	}
 
 	if sub[1].w < sub[0].w {
@@ -48,7 +51,7 @@ func (ka *karger) fastRandMinCut() {
 
 // parallelised within the recursion tree
 
-func FastRandMinCutPar(g *Undirected, iter, threads int) (c []Edge, w float64) {
+func RandMinCutPar(g *Undirected, iter, threads int) (c []Edge, w float64) {
 	k := newKarger(g)
 	k.split = threads
 	if k.split == 0 {
@@ -56,7 +59,7 @@ func FastRandMinCutPar(g *Undirected, iter, threads int) (c []Edge, w float64) {
 	}
 	w = math.Inf(1)
 	for i := 0; i < iter; i++ {
-		k.fastRandMinCutPar()
+		k.fastMinCutPar()
 		if k.w < w {
 			w = k.w
 			c = k.c
@@ -66,9 +69,9 @@ func FastRandMinCutPar(g *Undirected, iter, threads int) (c []Edge, w float64) {
 	return c, w
 }
 
-func (ka *karger) fastRandMinCutPar() {
+func (ka *karger) fastMinCutPar() {
 	if ka.order <= 6 {
-		ka.randCompact(2)
+		ka.compact(2)
 		return
 	}
 
@@ -86,12 +89,12 @@ func (ka *karger) fastRandMinCutPar() {
 			wg.Add(1)
 			go func(ks *karger) {
 				defer wg.Done()
-				ks.randContract(t)
-				ks.fastRandMinCutPar()
+				ks.contract(t)
+				ks.fastMinCutPar()
 			}(ks)
 		} else {
-			ks.randContract(t)
-			ks.fastRandMinCutPar()
+			ks.contract(t)
+			ks.fastMinCutPar()
 		}
 	}
 
@@ -168,7 +171,7 @@ func (ka *karger) clone() *karger {
 	return &c
 }
 
-func (ka *karger) randContract(k int) {
+func (ka *karger) contract(k int) {
 	for ka.order > k {
 		id, err := ka.sel.Select()
 		if err != nil {
@@ -204,8 +207,8 @@ func (ka *karger) randContract(k int) {
 	}
 }
 
-func (ka *karger) randCompact(k int) {
-	ka.randContract(k)
+func (ka *karger) compact(k int) {
+	ka.contract(k)
 	ka.c, ka.w = []Edge{}, 0
 	for _, e := range ka.g.Edges() {
 		if ka.loop(e) {
