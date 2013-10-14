@@ -93,16 +93,7 @@ func (g *Undirected) Add(n Node) error {
 		return NodeExists
 	}
 
-	if id == len(g.nodes) {
-		g.nodes = append(g.nodes, n)
-	} else if id > len(g.nodes) {
-		ns := make(Nodes, id+1)
-		copy(ns, g.nodes)
-		g.nodes = ns
-		g.nodes[id] = n
-	} else {
-		g.nodes[id] = n
-	}
+	g.addNode(n, id)
 	n.setIndex(len(g.compNodes))
 	g.compNodes = append(g.compNodes, n)
 
@@ -117,21 +108,25 @@ func (g *Undirected) AddID(id int) (Node, error) {
 	}
 
 	n := newNode(id)
-
-	if id == len(g.nodes) {
-		g.nodes = append(g.nodes, n)
-	} else if id > len(g.nodes) {
-		ns := make(Nodes, id+1)
-		copy(ns, g.nodes)
-		g.nodes = ns
-		g.nodes[id] = n
-	} else {
-		g.nodes[id] = n
-	}
+	g.addNode(n, id)
 	n.setIndex(len(g.compNodes))
 	g.compNodes = append(g.compNodes, n)
 
 	return n, nil
+}
+
+func (g *Undirected) addNode(n Node, id int) {
+	switch {
+	case id == len(g.nodes):
+		g.nodes = append(g.nodes, n)
+	case id > len(g.nodes):
+		ns := make(Nodes, id+1)
+		copy(ns, g.nodes)
+		g.nodes = ns
+		g.nodes[id] = n
+	default:
+		g.nodes[id] = n
+	}
 }
 
 // DeleteByID deletes the node with the specified from the graph. If the specified node does not exist
@@ -242,14 +237,15 @@ func (g *Undirected) newEdgeKeepID(id int, u, v Node, w float64, f EdgeFlags) Ed
 	}
 	e := newEdge(id, len(g.compEdges), u, v, w, f)
 
-	if id == len(g.edges) {
+	switch {
+	case id == len(g.edges):
 		g.edges = append(g.edges, e)
-	} else if id > len(g.edges) {
+	case id > len(g.edges):
 		es := make(Edges, id+1)
 		copy(es, g.edges)
 		g.edges = es
 		g.edges[id] = e
-	} else {
+	default:
 		g.edges[id] = e
 	}
 	e.setIndex(len(g.compEdges))
