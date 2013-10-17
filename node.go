@@ -73,11 +73,11 @@ func (n *node) Degree() int {
 
 // Neighbors returns a slice of nodes that share an edge with the node. Multiply connected nodes are
 // repeated in the slice. If the node is n-connected it will be included in the slice, potentially
-// repeatedly if there are multiple n-connecting edges.
+// repeatedly if there are multiple n-connecting edges. If ef is nil all edges are included.
 func (n *node) Neighbors(ef EdgeFilter) []Node {
 	var nodes []Node
 	for _, e := range n.edges {
-		if ef(e) {
+		if ef == nil || ef(e) {
 			if a := e.Tail(); a.ID() == n.ID() {
 				nodes = append(nodes, e.Head())
 			} else {
@@ -93,7 +93,7 @@ func (n *node) Neighbors(ef EdgeFilter) []Node {
 func (n *node) Hops(ef EdgeFilter) []*Hop {
 	var h []*Hop
 	for _, e := range n.edges {
-		if ef(e) {
+		if ef == nil || ef(e) {
 			if a := e.Tail(); a.ID() == n.ID() {
 				h = append(h, &Hop{e, e.Head()})
 			} else {

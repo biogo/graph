@@ -99,8 +99,7 @@ func (s *S) TestUndirectedConnected(c *check.C) {
 
 func (s *S) TestUndirectedConnectedComponent(c *check.C) {
 	g := undirected(c, uv)
-	f := func(_ Edge) bool { return true }
-	c.Check(len(g.ConnectedComponents(f)), check.Equals, 1)
+	c.Check(len(ConnectedComponents(g, nil)), check.Equals, 1)
 	g.DeleteByID(deleteNode)
 	nodes, edges := make(map[int]int), make(map[int]int)
 	for _, n := range uv {
@@ -110,7 +109,7 @@ func (s *S) TestUndirectedConnectedComponent(c *check.C) {
 	}
 	c.Check(g.Order(), check.Equals, len(nodes)-1)
 	c.Check(g.Size(), check.Equals, len(uv)-edges[deleteNode])
-	cc := g.ConnectedComponents(f)
+	cc := ConnectedComponents(g, nil)
 	c.Check(len(cc), check.Equals, 2)
 	for i, p := range cc {
 		c.Check(len(p), check.Equals, partSizes[i])

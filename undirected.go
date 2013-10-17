@@ -436,7 +436,7 @@ func (g *Undirected) DeleteEdge(e Edge) error {
 // ConnectedComponents returns a slice of slices of nodes. Each top level slice is the set of nodes
 // composing a connected component of the graph. Connection is determined by traversal of edges that
 // satisfy the edge filter ef.
-func (g *Undirected) ConnectedComponents(ef EdgeFilter) []Nodes {
+func ConnectedComponents(g *Undirected, ef EdgeFilter) []Nodes {
 	var cc []Nodes
 	df := NewDepthFirst()
 	c := []Node{}
@@ -444,7 +444,7 @@ func (g *Undirected) ConnectedComponents(ef EdgeFilter) []Nodes {
 		c = append(c, n)
 		return false
 	}
-	for _, s := range g.compNodes {
+	for _, s := range g.Nodes() {
 		if df.Visited(s) {
 			continue
 		}
