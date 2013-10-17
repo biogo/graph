@@ -157,9 +157,9 @@ func (ns Nodes) BuildUndirected(compact bool) (*Undirected, error) {
 			g.AddID(vid)
 			var ne Edge
 			if compact {
-				ne = g.newEdge(g.nodes[uid], g.nodes[vid], e.Weight())
+				ne = g.newEdge(g.nodes[uid], g.nodes[vid])
 			} else {
-				ne = g.newEdgeKeepID(e.ID(), g.nodes[uid], g.nodes[vid], e.Weight())
+				ne = g.newEdgeKeepID(e.ID(), g.nodes[uid], g.nodes[vid])
 			}
 			g.nodes[uid].add(ne)
 			if vid != uid {

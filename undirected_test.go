@@ -35,7 +35,7 @@ func undirected(c *check.C, edges []e) (g *Undirected) {
 	for _, e := range edges {
 		u, _ := g.AddID(e.u)
 		v, _ := g.AddID(e.v)
-		g.Connect(u, v, 1)
+		g.Connect(u, v)
 	}
 
 	return

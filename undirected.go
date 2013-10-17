@@ -222,8 +222,8 @@ func (g *Undirected) Merge(dst, src Node) error {
 
 // newEdge makes a new edge joining u and v with weight w. The ID chosen for the
 // edge is NextEdgeID().
-func (g *Undirected) newEdge(u, v Node, w float64) Edge {
-	e := newEdge(len(g.edges), len(g.compEdges), u, v, w)
+func (g *Undirected) newEdge(u, v Node) Edge {
+	e := newEdge(len(g.edges), len(g.compEdges), u, v)
 	g.edges = append(g.edges, e)
 	g.compEdges = append(g.compEdges, e)
 
@@ -231,11 +231,11 @@ func (g *Undirected) newEdge(u, v Node, w float64) Edge {
 }
 
 // newEdgeKeepID makes a new edge joining u and v with ID id and weight w.
-func (g *Undirected) newEdgeKeepID(id int, u, v Node, w float64) Edge {
+func (g *Undirected) newEdgeKeepID(id int, u, v Node) Edge {
 	if id < len(g.edges) && g.edges[id] != nil {
 		panic("graph: attempted to create a new edge with an existing ID")
 	}
-	e := newEdge(id, len(g.compEdges), u, v, w)
+	e := newEdge(id, len(g.compEdges), u, v)
 
 	switch {
 	case id == len(g.edges):
@@ -289,7 +289,7 @@ func (g *Undirected) ConnectWith(u, v Node, with Edge) error {
 // Connect creates a new edge joining nodes u and v with weight w.
 // The new edge is returned on success. An error is returned if either of the nodes does not
 // exist.
-func (g *Undirected) Connect(u, v Node, w float64) (Edge, error) {
+func (g *Undirected) Connect(u, v Node) (Edge, error) {
 	var (
 		ok  bool
 		err error
@@ -303,7 +303,7 @@ func (g *Undirected) Connect(u, v Node, w float64) (Edge, error) {
 		return nil, err
 	}
 
-	e := g.newEdge(u, v, w)
+	e := g.newEdge(u, v)
 	u.add(e)
 	if v != u {
 		v.add(e)
@@ -315,7 +315,7 @@ func (g *Undirected) Connect(u, v Node, w float64) (Edge, error) {
 // Connect creates a new edge joining nodes with IDs uid and vid with weight w, and specifying edge
 // flags f. The id of the new edge is returned on success. An error is returned if either of the
 // nodes does not exist.
-func (g *Undirected) ConnectByID(uid, vid int, w float64) (int, error) {
+func (g *Undirected) ConnectByID(uid, vid int) (int, error) {
 	var (
 		ok  bool
 		err error
@@ -329,7 +329,7 @@ func (g *Undirected) ConnectByID(uid, vid int, w float64) (int, error) {
 		return -1, err
 	}
 
-	e := g.newEdge(g.nodes[uid], g.nodes[vid], w)
+	e := g.newEdge(g.nodes[uid], g.nodes[vid])
 	g.nodes[uid].add(e)
 	if vid != uid {
 		g.nodes[vid].add(e)

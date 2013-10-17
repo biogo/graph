@@ -14,7 +14,6 @@ var alreadyConnected = errors.New("graph: edge already fully connected")
 type Edge interface {
 	ID() int
 	Weight() float64
-	SetWeight(float64)
 	Nodes() (u, v Node)
 	Head() Node
 	Tail() Node
@@ -34,10 +33,9 @@ type EdgeFilter func(Edge) bool
 
 // An edge is an edge in a graph.
 type edge struct {
-	id     int
-	i      int
-	u, v   Node
-	weight float64
+	id   int
+	i    int
+	u, v Node
 }
 
 // NewEdge returns a new Edge.
@@ -46,8 +44,8 @@ func NewEdge() Edge {
 }
 
 // newEdge returns a new edge.
-func newEdge(id, i int, u, v Node, w float64) Edge {
-	return &edge{id: id, i: i, u: u, v: v, weight: w}
+func newEdge(id, i int, u, v Node) Edge {
+	return &edge{id: id, i: i, u: u, v: v}
 }
 
 // ID returns the id of the edge.
@@ -84,14 +82,9 @@ func (e *edge) Tail() Node {
 	return e.u
 }
 
-// Weight returns the weight of the edge.
+// Weight returns the weight of the edge. The default weight is 1.
 func (e *edge) Weight() float64 {
-	return e.weight
-}
-
-// SetWeight sets the weight of the edge to w.
-func (e *edge) SetWeight(w float64) {
-	e.weight = w
+	return 1
 }
 
 func (e *edge) reconnect(u, v Node) {
