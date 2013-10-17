@@ -18,7 +18,6 @@ type Edge interface {
 	Nodes() (u, v Node)
 	Head() Node
 	Tail() Node
-	String() string
 
 	index() int
 	setIndex(int)

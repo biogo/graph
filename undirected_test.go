@@ -64,7 +64,7 @@ func (s *S) TestUndirectedMerge(c *check.C) {
 		c.Fatal(err)
 	}
 	c.Check(len(conn), check.Equals, 1)
-	c.Check(conn[0].String(), check.Equals, "7--7")
+	c.Check(fmt.Sprint(conn[0]), check.Equals, "7--7")
 	c.Check(g.Order(), check.Equals, order-1)
 	c.Check(g.Size(), check.Equals, size)
 	c.Check(g.Node(7).Degree(), check.Equals, 6)
@@ -146,7 +146,7 @@ func (s *S) TestUndirectedBuild(c *check.C) {
 func (s *S) TestUndirectedRepresentation(c *check.C) {
 	g := undirected(c, uv)
 	for i, e := range g.Edges() {
-		c.Check(e.String(), check.Equals, fmt.Sprintf("%d--%d", uv[i].u, uv[i].v))
+		c.Check(fmt.Sprint(e), check.Equals, fmt.Sprintf("%d--%d", uv[i].u, uv[i].v))
 	}
 	reps := make([]string, len(uv)+1)
 	for _, n := range uv {
@@ -156,6 +156,6 @@ func (s *S) TestUndirectedRepresentation(c *check.C) {
 		}
 	}
 	for _, n := range g.Nodes() {
-		c.Check(n.String(), check.Equals, reps[n.ID()])
+		c.Check(fmt.Sprint(n), check.Equals, reps[n.ID()])
 	}
 }

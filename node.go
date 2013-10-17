@@ -14,7 +14,6 @@ type Node interface {
 	Degree() int
 	Neighbors(EdgeFilter) []Node
 	Hops(EdgeFilter) []*Hop
-	String() string
 
 	add(Edge)
 	drop(Edge)
