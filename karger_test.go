@@ -82,7 +82,7 @@ func createGraph(nodes []N) *Undirected {
 		for _, tid := range n.tails {
 			t, _ := g.AddID(tid)
 			if n.id < tid {
-				g.Connect(h, t, 1, 0)
+				g.Connect(h, t, 1)
 			}
 		}
 	}

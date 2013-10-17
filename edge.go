@@ -18,8 +18,6 @@ type Edge interface {
 	Nodes() (u, v Node)
 	Head() Node
 	Tail() Node
-	Flags() EdgeFlags
-	SetFlags(EdgeFlags)
 	String() string
 
 	index() int
@@ -32,15 +30,8 @@ type Edge interface {
 
 var _ Edge = &edge{}
 
-// EdgeFilter is a function type used for assessment of edges during graph traversal. 
+// EdgeFilter is a function type used for assessment of edges during graph traversal.
 type EdgeFilter func(Edge) bool
-
-// EdgeFlags is a type that can be used to arbitrarily alter the behavior of edges.
-type EdgeFlags uint32
-
-const (
-	EdgeCut EdgeFlags = 1 << iota // Set and use this flag to prevent traversal of temporarily cut edges.
-)
 
 // An edge is an edge in a graph.
 type edge struct {
@@ -48,7 +39,6 @@ type edge struct {
 	i      int
 	u, v   Node
 	weight float64
-	flags  EdgeFlags
 }
 
 // NewEdge returns a new Edge.
@@ -57,8 +47,8 @@ func NewEdge() Edge {
 }
 
 // newEdge returns a new edge.
-func newEdge(id, i int, u, v Node, w float64, f EdgeFlags) Edge {
-	return &edge{id: id, i: i, u: u, v: v, weight: w, flags: f}
+func newEdge(id, i int, u, v Node, w float64) Edge {
+	return &edge{id: id, i: i, u: u, v: v, weight: w}
 }
 
 // ID returns the id of the edge.
@@ -105,16 +95,6 @@ func (e *edge) SetWeight(w float64) {
 	e.weight = w
 }
 
-// Flags returns the flags value for the edge. One flag is currently defined, EdgeCut.
-func (e *edge) Flags() EdgeFlags {
-	return e.flags
-}
-
-// SetFlags sets the flags of the edge. One flag is currently defined, EdgeCut.
-func (e *edge) SetFlags(f EdgeFlags) {
-	e.flags = f
-}
-
 func (e *edge) reconnect(u, v Node) {
 	switch u {
 	case e.u:
@@ -158,7 +138,7 @@ func (e *edge) String() string {
 	return fmt.Sprintf("%d--%d", e.u.ID(), e.v.ID())
 }
 
-// Edges is a collection of edges used for internal representation of edge lists in a graph. 
+// Edges is a collection of edges used for internal representation of edge lists in a graph.
 type Edges []Edge
 
 func (e Edges) delFromGraph(i int) Edges {

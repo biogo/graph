@@ -220,22 +220,22 @@ func (g *Undirected) Merge(dst, src Node) error {
 
 // Edge methods
 
-// newEdge makes a new edge joining u and v with weight w and edge flags f. The ID chosen for the
+// newEdge makes a new edge joining u and v with weight w. The ID chosen for the
 // edge is NextEdgeID().
-func (g *Undirected) newEdge(u, v Node, w float64, f EdgeFlags) Edge {
-	e := newEdge(len(g.edges), len(g.compEdges), u, v, w, f)
+func (g *Undirected) newEdge(u, v Node, w float64) Edge {
+	e := newEdge(len(g.edges), len(g.compEdges), u, v, w)
 	g.edges = append(g.edges, e)
 	g.compEdges = append(g.compEdges, e)
 
 	return e
 }
 
-// newEdgeKeepID makes a new edge joining u and v with ID id, weight w and edge flags f.
-func (g *Undirected) newEdgeKeepID(id int, u, v Node, w float64, f EdgeFlags) Edge {
+// newEdgeKeepID makes a new edge joining u and v with ID id and weight w.
+func (g *Undirected) newEdgeKeepID(id int, u, v Node, w float64) Edge {
 	if id < len(g.edges) && g.edges[id] != nil {
 		panic("graph: attempted to create a new edge with an existing ID")
 	}
-	e := newEdge(id, len(g.compEdges), u, v, w, f)
+	e := newEdge(id, len(g.compEdges), u, v, w)
 
 	switch {
 	case id == len(g.edges):
@@ -286,10 +286,10 @@ func (g *Undirected) ConnectWith(u, v Node, with Edge) error {
 	return nil
 }
 
-// Connect creates a new edge joining nodes u and v with weight w, and specifying edge flags f.
+// Connect creates a new edge joining nodes u and v with weight w.
 // The new edge is returned on success. An error is returned if either of the nodes does not
 // exist.
-func (g *Undirected) Connect(u, v Node, w float64, f EdgeFlags) (Edge, error) {
+func (g *Undirected) Connect(u, v Node, w float64) (Edge, error) {
 	var (
 		ok  bool
 		err error
@@ -303,7 +303,7 @@ func (g *Undirected) Connect(u, v Node, w float64, f EdgeFlags) (Edge, error) {
 		return nil, err
 	}
 
-	e := g.newEdge(u, v, w, f)
+	e := g.newEdge(u, v, w)
 	u.add(e)
 	if v != u {
 		v.add(e)
@@ -315,7 +315,7 @@ func (g *Undirected) Connect(u, v Node, w float64, f EdgeFlags) (Edge, error) {
 // Connect creates a new edge joining nodes with IDs uid and vid with weight w, and specifying edge
 // flags f. The id of the new edge is returned on success. An error is returned if either of the
 // nodes does not exist.
-func (g *Undirected) ConnectByID(uid, vid int, w float64, f EdgeFlags) (int, error) {
+func (g *Undirected) ConnectByID(uid, vid int, w float64) (int, error) {
 	var (
 		ok  bool
 		err error
@@ -329,7 +329,7 @@ func (g *Undirected) ConnectByID(uid, vid int, w float64, f EdgeFlags) (int, err
 		return -1, err
 	}
 
-	e := g.newEdge(g.nodes[uid], g.nodes[vid], w, f)
+	e := g.newEdge(g.nodes[uid], g.nodes[vid], w)
 	g.nodes[uid].add(e)
 	if vid != uid {
 		g.nodes[vid].add(e)
