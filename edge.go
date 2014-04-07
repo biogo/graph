@@ -26,7 +26,7 @@ type Edge interface {
 	reconnect(dst, src Node)
 }
 
-var _ Edge = &edge{}
+var _ Edge = (*edge)(nil)
 
 // EdgeFilter is a function type used for assessment of edges during graph traversal.
 type EdgeFilter func(Edge) bool

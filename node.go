@@ -23,7 +23,7 @@ type Node interface {
 	setID(int)
 }
 
-var _ Node = &node{}
+var _ Node = (*node)(nil)
 
 // NodeFilter is a function type used for assessment of nodes during graph traversal.
 type NodeFilter func(Node) bool
