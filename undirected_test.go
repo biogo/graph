@@ -159,3 +159,21 @@ func (s *S) TestUndirectedRepresentation(c *check.C) {
 		c.Check(fmt.Sprint(n), check.Equals, reps[n.ID()])
 	}
 }
+
+func (s *S) TestDeleteEdge(c *check.C) {
+	g := undirected(c, uv)
+	e, err := g.ConnectingEdges(g.Node(7), g.Node(9))
+	c.Assert(err, check.Equals, nil)
+	c.Assert(len(e), check.Equals, 1)
+	c.Check(e[0].Head().ID(), check.Equals, 7)
+	c.Check(e[0].Tail().ID(), check.Equals, 9)
+	g.DeleteEdge(e[0])
+	c.Check(e[0].Head(), check.Equals, nil)
+	c.Check(e[0].Tail(), check.Equals, nil)
+	cc := ConnectedComponents(g, func(e Edge) bool {
+		c.Check(e.Head(), check.Not(check.Equals), nil)
+		c.Check(e.Tail(), check.Not(check.Equals), nil)
+		return true
+	})
+	c.Check(len(cc), check.Equals, 2)
+}
