@@ -22,7 +22,7 @@ type Edge interface {
 	setIndex(int)
 	setID(int)
 	join(u, v Node)
-	disconnect(Node)
+	disconnect()
 	reconnect(dst, src Node)
 }
 
@@ -96,15 +96,11 @@ func (e *edge) reconnect(u, v Node) {
 	}
 }
 
-func (e *edge) disconnect(n Node) {
-	switch n {
-	case e.u:
-		e.u.drop(e)
-		e.u = nil
-	case e.v:
-		e.v.drop(e)
-		e.v = nil
-	}
+func (e *edge) disconnect() {
+	e.u.drop(e)
+	e.u = nil
+	e.v.drop(e)
+	e.v = nil
 }
 
 func (e *edge) connect(n Node) (err error) {

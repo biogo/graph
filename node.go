@@ -56,6 +56,9 @@ func (n *node) ID() int {
 
 // Edges returns a slice of edges that are incident on the node.
 func (n *node) Edges() []Edge {
+	if len(n.edges) == 0 {
+		return nil
+	}
 	return n.edges
 }
 

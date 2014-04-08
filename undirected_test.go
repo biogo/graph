@@ -177,3 +177,26 @@ func (s *S) TestDeleteEdge(c *check.C) {
 	})
 	c.Check(len(cc), check.Equals, 2)
 }
+
+func (s *S) TestDeleteNode(c *check.C) {
+	g := NewUndirected()
+	cen := g.NewNode()
+	g.Add(cen)
+	branches := make([]Node, 20)
+	edges := make([]Edge, 20)
+	for i := range branches {
+		b := g.NewNode()
+		g.Add(b)
+		edges[i], _ = g.Connect(cen, b)
+		branches[i] = b
+	}
+	g.Delete(cen)
+	for _, e := range edges {
+		c.Check(e.Head(), check.Equals, nil)
+		c.Check(e.Tail(), check.Equals, nil)
+	}
+	for _, b := range branches {
+		c.Check(b.Edges(), check.DeepEquals, []Edge(nil))
+	}
+	c.Check(cen.ID(), check.Equals, -1)
+}
