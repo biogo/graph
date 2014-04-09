@@ -98,9 +98,11 @@ func (e *edge) reconnect(u, v Node) {
 
 func (e *edge) disconnect() {
 	e.u.drop(e)
+	if e.u != e.v {
+		e.v.drop(e)
+		e.v = nil
+	}
 	e.u = nil
-	e.v.drop(e)
-	e.v = nil
 }
 
 func (e *edge) connect(n Node) (err error) {

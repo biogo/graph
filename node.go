@@ -4,9 +4,7 @@
 
 package graph
 
-import (
-	"fmt"
-)
+import "fmt"
 
 type Node interface {
 	ID() int
@@ -119,7 +117,7 @@ func (n *node) drop(e Edge) {
 	for i := 0; i < len(n.edges); {
 		if n.edges[i] == e {
 			n.edges = n.edges.delFromNode(i)
-			return // assumes e has not been added more than once - this should not happen, but we don't check for it
+			break // assumes e has not been added more than once - this should not happen, but we don't check for it
 		} else {
 			i++
 		}

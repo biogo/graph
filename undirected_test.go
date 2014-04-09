@@ -165,9 +165,17 @@ func (s *S) TestDeleteEdge(c *check.C) {
 	e, err := g.ConnectingEdges(g.Node(7), g.Node(9))
 	c.Assert(err, check.Equals, nil)
 	c.Assert(len(e), check.Equals, 1)
-	c.Check(e[0].Head().ID(), check.Equals, 7)
-	c.Check(e[0].Tail().ID(), check.Equals, 9)
+	h := e[0].Head()
+	t := e[0].Tail()
+	c.Check(h.ID(), check.Equals, 7)
+	c.Check(t.ID(), check.Equals, 9)
 	g.DeleteEdge(e[0])
+	for _, ne := range h.Edges() {
+		c.Check(ne, check.Not(check.DeepEquals), e[0])
+	}
+	for _, ne := range t.Edges() {
+		c.Check(ne, check.Not(check.DeepEquals), e[0])
+	}
 	c.Check(e[0].Head(), check.Equals, nil)
 	c.Check(e[0].Tail(), check.Equals, nil)
 	cc := ConnectedComponents(g, func(e Edge) bool {
@@ -187,7 +195,7 @@ func (s *S) TestDeleteNode(c *check.C) {
 	for i := range branches {
 		b := g.NewNode()
 		g.Add(b)
-		edges[i], _ = g.Connect(cen, b)
+		edges[i], _ = g.Connect(b, cen)
 		branches[i] = b
 	}
 	g.Delete(cen)
@@ -199,4 +207,14 @@ func (s *S) TestDeleteNode(c *check.C) {
 		c.Check(b.Edges(), check.DeepEquals, []Edge(nil))
 	}
 	c.Check(cen.ID(), check.Equals, -1)
+	for _, e := range cen.Edges() {
+		c.Check(e.Head(), check.Not(check.Equals), nil)
+		c.Check(e.Tail(), check.Not(check.Equals), nil)
+	}
+	for _, n := range g.compNodes {
+		for _, e := range n.Edges() {
+			c.Check(e.Head(), check.Not(check.Equals), nil)
+			c.Check(e.Tail(), check.Not(check.Equals), nil)
+		}
+	}
 }

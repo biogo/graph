@@ -150,10 +150,12 @@ func (g *Undirected) Delete(n Node) error {
 func (g *Undirected) deleteNode(id int) {
 	n := g.nodes[id]
 	g.nodes[n.ID()] = nil
-	f := func(_ Edge) bool { return true }
-	for _, h := range n.Hops(f) {
+	for _, h := range n.Hops(nil) {
 		h.Edge.disconnect()
+		h.Node.drop(h.Edge)
 		g.compEdges = g.compEdges.delFromGraph(h.Edge.index())
+		g.edges[h.Edge.ID()] = nil
+		h.Edge.setID(-1)
 	}
 	g.compNodes = g.compNodes.delFromGraph(n.index())
 	n.setID(-1)
@@ -422,7 +424,11 @@ func (g *Undirected) DeleteEdge(e Edge) error {
 		return EdgeDoesNotExist
 	}
 
+	h := e.Head()
+	t := e.Tail()
 	e.disconnect()
+	h.drop(e)
+	t.drop(e)
 	g.compEdges = g.compEdges.delFromGraph(i)
 	g.edges[e.ID()] = nil
 	e.setID(-1)
