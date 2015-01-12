@@ -5,7 +5,7 @@
 package graph
 
 import (
-	check "launchpad.net/gocheck"
+	"gopkg.in/check.v1"
 	"math"
 	"math/rand"
 	"runtime"

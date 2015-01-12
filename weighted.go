@@ -35,7 +35,7 @@ func (s Selector) Init() {
 	}
 }
 
-// Select returns the value of the Index field of the chosen WeightedItem and the item is weighted 
+// Select returns the value of the Index field of the chosen WeightedItem and the item is weighted
 // zero to prevent further selection.
 func (s Selector) Select() (int, error) {
 	if s[0].total == 0 {
