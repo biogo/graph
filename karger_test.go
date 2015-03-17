@@ -1,15 +1,16 @@
-// Copyright ©2012 The bíogo.graph Authors. All rights reserved.
+// Copyright ©2012 The bíogo Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
 package graph
 
 import (
-	"gopkg.in/check.v1"
 	"math"
 	"math/rand"
 	"runtime"
 	"testing"
+
+	"gopkg.in/check.v1"
 )
 
 type N struct {
